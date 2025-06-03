@@ -43,3 +43,5 @@ jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrai
 
 # Plugins defined by this project
 spacex-android-application = { id = "spacex.android.application" }
+#nowinandroid-android-application-compose = { id = "nowinandroid.android.application.compose" }
+spacex-android-application-compose = { id = "spacex.android.application.compose" }

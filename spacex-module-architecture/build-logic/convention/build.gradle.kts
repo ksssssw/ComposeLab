@@ -21,6 +21,10 @@ kotlin {
 
 gradlePlugin {
     plugins {
+        register("androidApplicationCompose") {
+            id = "spacex.android.application.compose"
+            implementationClass = "AndroidApplicationComposeConventionPlugin"
+        }
         register("androidApplication") {
             id = "spacex.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
