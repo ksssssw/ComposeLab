@@ -29,5 +29,9 @@ gradlePlugin {
             id = "spacex.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
         }
+        register("androidLibraryCompose") {
+            id = "spacex.android.application"
+            implementationClass = "AndroidLibraryComposeConventionPlugin"
+        }
     }
 }
