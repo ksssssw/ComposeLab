@@ -1,8 +1,6 @@
-import com.android.build.gradle.LibraryExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
-import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 
 class AndroidFeatureConventionPlugin : Plugin<Project> {
@@ -16,7 +14,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
 
             dependencies {
                 // TODO: ui, designSystem 의존성 추가
-
+                "implementation"(project(":core:ui"))
             }
         }
     }

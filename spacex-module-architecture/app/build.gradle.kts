@@ -26,6 +26,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.feature.rockets)
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
