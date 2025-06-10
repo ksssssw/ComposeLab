@@ -30,8 +30,16 @@ gradlePlugin {
             implementationClass = "AndroidApplicationConventionPlugin"
         }
         register("androidLibraryCompose") {
-            id = "spacex.android.application"
+            id = "spacex.android.library.compose"
             implementationClass = "AndroidLibraryComposeConventionPlugin"
+        }
+        register("androidLibrary") {
+            id = "spacex.android.library"
+            implementationClass = "AndroidLibraryConventionPlugin"
+        }
+        register("androidFeature") {
+            id = "nowinandroid.android.feature"
+            implementationClass = "AndroidFeatureConventionPlugin"
         }
     }
 }

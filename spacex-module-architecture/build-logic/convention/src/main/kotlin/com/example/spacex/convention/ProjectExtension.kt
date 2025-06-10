@@ -1,4 +1,4 @@
-package com.example.convention
+package com.example.spacex.convention
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog

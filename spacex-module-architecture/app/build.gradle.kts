@@ -4,8 +4,6 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapplication"
-
     defaultConfig {
         applicationId = "com.example.myapplication"
         versionCode = 1
@@ -23,9 +21,13 @@ android {
             )
         }
     }
+
+    namespace = "com.example.myapplication"
 }
 
 dependencies {
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     

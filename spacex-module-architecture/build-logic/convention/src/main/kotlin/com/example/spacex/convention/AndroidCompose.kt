@@ -1,4 +1,4 @@
-package com.example.convention
+package com.example.spacex.convention
 
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.Project
@@ -22,10 +22,10 @@ internal fun Project.configureAndroidCompose(
             "debugImplementation"(libs.findLibrary("androidx-ui-tooling").get())
             
             // 추가적인 Compose 핵심 의존성들
-            "implementation"(libs.findLibrary("androidx-ui").get())
-            "implementation"(libs.findLibrary("androidx-ui-graphics").get())
-            "implementation"(libs.findLibrary("androidx-material3").get())
-            "implementation"(libs.findLibrary("androidx-activity-compose").get())
+//            "implementation"(libs.findLibrary("androidx-ui").get())
+//            "implementation"(libs.findLibrary("androidx-ui-graphics").get())
+//            "implementation"(libs.findLibrary("androidx-material3").get())
+//            "implementation"(libs.findLibrary("androidx-activity-compose").get())
         }
     }
 }
