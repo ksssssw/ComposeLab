@@ -27,6 +27,8 @@ android {
 
 dependencies {
     implementation(projects.feature.rockets)
+    implementation(projects.feature.crew)
+    implementation(projects.feature.company)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

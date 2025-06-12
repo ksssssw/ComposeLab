@@ -1,4 +1,4 @@
-package com.example.rockets
+package com.example.crew
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,19 +9,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun RocketsScreen() {
+fun CrewScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Rockets Screen"
+            text = "Crew Screen"
         )
     }
 }
 
 @Preview
 @Composable
-fun RocketsScreenPreview() {
-    RocketsScreen()
+fun CrewScreenPreview() {
+    CrewScreen()
 }
