@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.spacex.feature.rockets"
+    namespace = "com.example.rockets"
 }
 
 dependencies {

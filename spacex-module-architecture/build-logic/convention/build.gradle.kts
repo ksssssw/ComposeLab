@@ -7,6 +7,7 @@ group = "com.example.buildlogic"
 dependencies {
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
+    compileOnly(libs.kotlinx.serialization.core)
 }
 
 java {
@@ -38,7 +39,7 @@ gradlePlugin {
             implementationClass = "AndroidLibraryConventionPlugin"
         }
         register("androidFeature") {
-            id = "nowinandroid.android.feature"
+            id = "spacex.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
         }
     }

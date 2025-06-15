@@ -27,6 +27,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.ui)
     implementation(projects.feature.rockets)
     implementation(projects.feature.crew)
     implementation(projects.feature.company)

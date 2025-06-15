@@ -6,10 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -20,18 +16,12 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entry
-import androidx.navigation3.runtime.entryProvider
+import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.ui.NavDisplay
-import com.example.company.CompanyScreen
-import com.example.crew.CrewScreen
+import com.example.myapplication.navigation.SpaceXNavDisplay
+import com.example.myapplication.navigation.TopLevelDestination
 import com.example.myapplication.ui.theme.MyApplicationTheme
-import com.example.rockets.RocketsScreen
-import kotlinx.serialization.Serializable
+import com.example.rockets.navigation.RocketsNavKey
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,53 +30,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 SpacexBottomNavigationApp()
-//                Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
-//                    SpacexApp()
-//                }
             }
         }
     }
 }
 
-@Serializable
-data object Rockets : NavKey
-
-@Serializable
-data object Crew : NavKey
-
-@Serializable
-data object Company : NavKey
-
-data class BottomNavigationItem(
-    val navKey: NavKey,
-    val icon: ImageVector,
-    val label: String
-)
-
 @Composable
 fun SpacexBottomNavigationApp() {
-    val bottomNavItems = listOf(
-        BottomNavigationItem(
-            navKey = Rockets,
-            icon = Icons.Default.Home,
-            label = "Rockets"
-        ),
-        BottomNavigationItem(
-            navKey = Crew,
-            icon = Icons.Default.Person,
-            label = "Crew"
-        ),
-        BottomNavigationItem(
-            navKey = Company,
-            icon = Icons.Default.Info,
-            label = "Company"
-        )
-    )
+    val topLevelDestination: List<TopLevelDestination> = TopLevelDestination.entries
 
-    val backStack = rememberNavBackStack(Rockets)
+    val backStack = rememberNavBackStack(RocketsNavKey)
     val currentTab by remember {
         derivedStateOf {
-            backStack.lastOrNull() ?: Rockets
+            backStack.lastOrNull() ?: RocketsNavKey
         }
     }
 
@@ -94,16 +50,16 @@ fun SpacexBottomNavigationApp() {
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar {
-                bottomNavItems.forEach { item ->
+                topLevelDestination.forEach { item ->
                     val selected = item.navKey == currentTab
                     NavigationBarItem(
                         icon = {
                             Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label
+                                imageVector = item.selectedIcon,
+                                contentDescription = stringResource(item.iconLabelId)
                             )
                         },
-                        label = { Text(item.label) },
+                        label = { Text(stringResource(item.iconLabelId)) },
                         selected = currentTab == item.navKey,
                         onClick = {
                             if (currentTab != item.navKey) {
@@ -121,57 +77,9 @@ fun SpacexBottomNavigationApp() {
             }
         }
     ) { paddingValues ->
-        NavDisplay(
+        SpaceXNavDisplay(
             backStack = backStack,
-            modifier = Modifier.padding(paddingValues),
-            onBack = {
-                if (backStack.size > 1) {
-                    backStack.removeLastOrNull()
-                } else {
-                    // 루트에서는 그냥 앱 종료
-                }
-            },
-            entryProvider = entryProvider {
-                entry<Rockets> {
-                    RocketsScreen()
-                }
-
-                entry<Crew> {
-                    CrewScreen(
-                        onNavigationToCompany = { backStack.add(Company) }
-                    )
-                }
-
-                entry<Company> {
-                    CompanyScreen()
-                }
-            }
+            modifier = Modifier.padding((paddingValues))
         )
     }
-}
-
-@Composable
-fun SpacexApp(
-    modifier: Modifier = Modifier
-) {
-    val backStack = rememberNavBackStack(Crew) // start destination
-
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        onBack = {
-            backStack.removeLastOrNull()
-        },
-        entryProvider = entryProvider {
-            entry<Crew> {
-                CrewScreen(
-                    onNavigationToCompany = { backStack.add(Company) }
-                )
-            }
-
-            entry<Company> {
-                CompanyScreen()
-            }
-        }
-    )
 }
