@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.spacex.android.application)
     alias(libs.plugins.spacex.android.application.compose)
+    alias(libs.plugins.jetbrains.kotlin.serialization) // Kotlin serialization plugin for Nav3
 }
 
 android {
@@ -29,6 +30,11 @@ dependencies {
     implementation(projects.feature.rockets)
     implementation(projects.feature.crew)
     implementation(projects.feature.company)
+
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.kotlinx.serialization.core)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
