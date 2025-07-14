@@ -1,12 +1,13 @@
 plugins {
     alias(libs.plugins.spacex.android.application)
     alias(libs.plugins.spacex.android.application.compose)
+    alias(libs.plugins.spacex.koin)
     alias(libs.plugins.jetbrains.kotlin.serialization) // Kotlin serialization plugin for Nav3
 }
 
 android {
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.ksssssw.spacex"
         versionCode = 1
         versionName = "1.0"
 
@@ -23,11 +24,12 @@ android {
         }
     }
 
-    namespace = "com.example.myapplication"
+    namespace = "com.ksssssw.spacex"
 }
 
 dependencies {
     implementation(projects.core.ui)
+    implementation(projects.core.datasource)
     implementation(projects.feature.rockets)
     implementation(projects.feature.crew)
     implementation(projects.feature.company)

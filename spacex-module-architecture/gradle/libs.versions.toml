@@ -12,12 +12,19 @@ composeBom = "2024.04.01"
 appcompat = "1.7.0"
 material = "1.10.0"
 jetbrainsKotlinJvm = "2.0.0"
+
 # Navigation 3
 nav3Core = "1.0.0-alpha01"
 lifecycleViewmodelNav3 = "1.0.0-alpha01"
 kotlinSerialization = "2.1.21"
 kotlinxSerializationCore = "1.8.1"
 material3AdaptiveNav3 = "1.0.0-SNAPSHOT"
+
+# Koin
+koin-bom = "4.1.0"
+
+# Ktor
+ktor-version = "3.2.1"
 
 [libraries]
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
@@ -42,6 +49,7 @@ androidx-compose-material3-navigationSuite = { group = "androidx.compose.materia
 androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
 # Navigation 3
 # Core Navigation 3 libraries
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
@@ -49,6 +57,16 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 # Optional add-on libraries
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+
+# Koin
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-android = { module = "io.insert-koin:koin-android" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
+
+# Ktor
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor-version" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor-version" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -63,6 +81,7 @@ spacex-android-application-compose = { id = "spacex.android.application.compose"
 spacex-android-feature = { id = "spacex.android.feature" }
 spacex-android-library = { id = "spacex.android.library" }
 spacex-android-library-compose = { id = "spacex.android.library.compose" }
+spacex-koin = { id = "spacex.koin" }
 
 # Navigation 3
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization"}

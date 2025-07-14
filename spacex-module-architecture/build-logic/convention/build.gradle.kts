@@ -42,5 +42,9 @@ gradlePlugin {
             id = "spacex.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
         }
+        register("koin") {
+            id = "spacex.koin"
+            implementationClass = "KoinConventionPlugin"
+        }
     }
 }

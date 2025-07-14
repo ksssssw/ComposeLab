@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.rockets"
+    namespace = "com.ksssssw.feature.rockets"
 }
 
 dependencies {

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.company"
+    namespace = "com.ksssssw.feature.company"
 }
 
 dependencies {

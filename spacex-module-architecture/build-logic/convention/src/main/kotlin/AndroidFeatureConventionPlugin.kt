@@ -1,4 +1,4 @@
-import com.example.spacex.convention.libs
+import com.ksssssw.spacex.convention.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply

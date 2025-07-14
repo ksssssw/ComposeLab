@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.crew"
+    namespace = "com.ksssssw.feature.crew"
 }
 
 dependencies {
