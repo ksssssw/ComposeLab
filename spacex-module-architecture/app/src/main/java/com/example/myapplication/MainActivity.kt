@@ -20,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.example.myapplication.navigation.SpaceXNavDisplay
 import com.example.myapplication.navigation.TopLevelDestination
-import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.ui.theme.SpaceXTheme
 import com.example.rockets.navigation.RocketsNavKey
 
 class MainActivity : ComponentActivity() {
@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
+            SpaceXTheme {
                 SpacexBottomNavigationApp()
             }
         }
