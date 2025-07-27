@@ -16,9 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun RocketsScreen() {
+fun RocketsScreen(
+    viewModel: RocketsViewModel = koinViewModel()
+) {
+    val viewModel = viewModel
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

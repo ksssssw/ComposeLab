@@ -1,15 +1,17 @@
 plugins {
-    alias(libs.plugins.spacex.android.feature)
-    alias(libs.plugins.spacex.android.library.compose)
+    alias(libs.plugins.spacex.android.library)
     alias(libs.plugins.spacex.koin)
+    id("kotlinx-serialization")
 }
 
 android {
-    namespace = "com.ksssssw.feature.rockets"
+    namespace = "com.ksssssw.spacex.data"
 }
 
 dependencies {
-    implementation(projects.core.data)
+    api(projects.core.common)
+    api(projects.core.model)
+    api(projects.core.network)
 
     testImplementation(libs.junit)
 
