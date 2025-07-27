@@ -1,6 +1,8 @@
 package com.ksssssw.spacex.network.di
 
 import android.util.Log
+import coil.ImageLoader
+import coil.request.ImageRequest
 import com.ksssssw.spacex.network.KtorSpaceXNetworkDataSource
 import com.ksssssw.spacex.network.SpaceXNetworkDataSource
 import io.ktor.client.HttpClient
@@ -8,12 +10,14 @@ import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import org.koin.android.ext.koin.androidApplication
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val networkModule = module {
@@ -52,5 +56,23 @@ val networkModule = module {
 
     single<SpaceXNetworkDataSource> {
         KtorSpaceXNetworkDataSource(get())
+    }
+
+    single<OkHttpClient> {
+        OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .addHeader("User-Agent", "Mozilla/5.0")
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
+    }
+
+    // Coil ImageLoader
+    single<ImageLoader> {
+        ImageLoader.Builder(androidApplication())
+            .callFactory { get<OkHttpClient>() }
+            .build()
     }
 }

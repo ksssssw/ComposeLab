@@ -45,7 +45,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    
+
+    implementation(libs.coil.kt)
+    implementation(libs.coil.kt.compose)
+
     // 테스트 의존성들
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
