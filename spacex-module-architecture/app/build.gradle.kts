@@ -46,7 +46,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    implementation(libs.coil.kt)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.network.ktor)
     implementation(libs.coil.kt.compose)
 
     // 테스트 의존성들

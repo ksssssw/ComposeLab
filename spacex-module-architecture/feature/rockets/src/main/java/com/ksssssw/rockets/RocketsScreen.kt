@@ -20,15 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
 import com.ksssssw.spacex.model.Rocket
 import com.ksssssw.ui.preview.RocketsPreviewParameterProvider
 import org.koin.compose.viewmodel.koinViewModel
@@ -87,26 +85,11 @@ fun RocketItem(
     ) {
         AsyncImage(
             model = imageUrl,
-//            model = ImageRequest.Builder(LocalContext.current)
-//                .data(imageUrl)
-//                .setHeader("User-Agent", "Mozilla/5.0")
-//                .build(),
             contentDescription = name,
             modifier = Modifier
                 .size(56.dp)
                 .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop,
-            placeholder = painterResource(id = android.R.drawable.ic_menu_gallery),
-            error = painterResource(id = android.R.drawable.ic_menu_gallery),
-            onLoading = {
-                Log.d("AsyncImage", "Loading image: $imageUrl")
-            },
-            onSuccess = {
-                Log.d("AsyncImage", "Successfully loaded image: $imageUrl")
-            },
-            onError = { error ->
-                Log.e("AsyncImage", "Failed to load image: $imageUrl", error.result.throwable)
-            }
+            contentScale = ContentScale.Crop
         )
 
         Column(

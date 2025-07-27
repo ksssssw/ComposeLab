@@ -14,7 +14,8 @@ dependencies {
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.serialization)
-    implementation(libs.coil.kt)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.network.ktor)
     implementation(libs.coil.kt.compose)
 
     testImplementation(libs.junit)

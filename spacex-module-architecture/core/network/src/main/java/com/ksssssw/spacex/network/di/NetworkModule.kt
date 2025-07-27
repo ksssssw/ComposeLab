@@ -1,8 +1,8 @@
 package com.ksssssw.spacex.network.di
 
 import android.util.Log
-import coil.ImageLoader
-import coil.request.ImageRequest
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.ksssssw.spacex.network.KtorSpaceXNetworkDataSource
 import com.ksssssw.spacex.network.SpaceXNetworkDataSource
 import io.ktor.client.HttpClient
@@ -17,7 +17,6 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidApplication
-import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val networkModule = module {
@@ -72,7 +71,15 @@ val networkModule = module {
     // Coil ImageLoader
     single<ImageLoader> {
         ImageLoader.Builder(androidApplication())
-            .callFactory { get<OkHttpClient>() }
+            .components {
+                add(
+                    OkHttpNetworkFetcherFactory(
+                        callFactory = {
+                            get<OkHttpClient>()
+                        }
+                    )
+                )
+            }
             .build()
     }
 }
