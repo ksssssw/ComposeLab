@@ -1,6 +1,7 @@
 package com.ksssssw.spacex.network.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class NetworkCrew(
@@ -26,4 +27,17 @@ data class NetworkCrewMember(
     val wikipedia: String,
     val launches: List<String>,
     val status: String
+)
+
+@Serializable
+data class CrewQueryRequest(
+    val query: Map<String, JsonElement> = emptyMap(),
+    val options: CrewQueryOptions = CrewQueryOptions()
+)
+
+@Serializable
+data class CrewQueryOptions(
+    val page: Int = 1,
+    val limit: Int = 10,
+    val sort: Map<String, String> = mapOf("name" to "asc")
 )

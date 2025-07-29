@@ -1,5 +1,7 @@
 package com.ksssssw.spacex.network
 
+import com.ksssssw.spacex.network.model.CrewQueryOptions
+import com.ksssssw.spacex.network.model.CrewQueryRequest
 import com.ksssssw.spacex.network.model.NetworkCrew
 import com.ksssssw.spacex.network.model.NetworkRocket
 import io.ktor.client.HttpClient
@@ -16,12 +18,16 @@ class KtorSpaceXNetworkDataSource(
     override suspend fun getRockets(): List<NetworkRocket> =
         httpClient.get("rockets").body()
 
-    override suspend fun getCrew(page: Int, limit: Int): List<NetworkCrew> {
+    override suspend fun getCrew(page: Int, limit: Int): List<NetworkCrew> =
         httpClient.post("crew/query") {
             contentType(ContentType.Application.Json)
             setBody(
-                
+                CrewQueryRequest(
+                    options = CrewQueryOptions(
+                        page = page,
+                        limit = limit
+                    )
+                )
             )
-        }
-    }
+        }.body()
 }
