@@ -1,5 +1,6 @@
 package com.ksssssw.spacex.network
 
+import android.util.Log
 import com.ksssssw.spacex.network.model.CrewQueryOptions
 import com.ksssssw.spacex.network.model.CrewQueryRequest
 import com.ksssssw.spacex.network.model.NetworkCrew
@@ -18,16 +19,22 @@ class KtorSpaceXNetworkDataSource(
     override suspend fun getRockets(): List<NetworkRocket> =
         httpClient.get("rockets").body()
 
-    override suspend fun getCrew(page: Int, limit: Int): List<NetworkCrew> =
-        httpClient.post("crew/query") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                CrewQueryRequest(
-                    options = CrewQueryOptions(
-                        page = page,
-                        limit = limit
-                    )
-                )
+    override suspend fun getCrew(page: Int, limit: Int): NetworkCrew {
+        Log.d("NetworkDataSource", "Making crew query request - page: $page, limit: $limit")
+        val request = CrewQueryRequest(
+            options = CrewQueryOptions(
+                page = page,
+                limit = limit
             )
-        }.body()
+        )
+        Log.d("NetworkDataSource", "Request body: $request")
+        
+        val response = httpClient.post("crew/query") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body<NetworkCrew>()
+        
+        Log.d("NetworkDataSource", "Response: docs=${response.docs.size}, page=${response.page}, hasNext=${response.hasNextPage}, total=${response.totalDocs}")
+        return response
+    }
 }

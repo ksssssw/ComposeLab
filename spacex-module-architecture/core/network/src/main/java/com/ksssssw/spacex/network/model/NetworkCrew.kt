@@ -1,5 +1,7 @@
 package com.ksssssw.spacex.network.model
 
+import com.ksssssw.spacex.model.Crew
+import com.ksssssw.spacex.model.CrewPage
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
@@ -7,7 +9,6 @@ import kotlinx.serialization.json.JsonElement
 data class NetworkCrew(
     val docs: List<NetworkCrewMember>,
     val totalDocs: Int,
-    val offset: Int,
     val limit: Int,
     val totalPages: Int,
     val page: Int,
@@ -40,4 +41,23 @@ data class CrewQueryOptions(
     val page: Int = 1,
     val limit: Int = 10,
     val sort: Map<String, String> = mapOf("name" to "asc")
+)
+
+fun NetworkCrew.asExternalModel(): CrewPage = CrewPage(
+    crewMembers = docs.map { it.asExternalModel() },
+    totalDocs = totalDocs,
+    page = page,
+    totalPages = totalPages,
+    hasNextPage = hasNextPage,
+    hasPrevPage = hasPrevPage,
+)
+
+fun NetworkCrewMember.asExternalModel(): Crew = Crew(
+    id = id,
+    name = name,
+    agency = agency,
+    image = image,
+    wikipedia = wikipedia,
+    launches = launches,
+    status = status,
 )

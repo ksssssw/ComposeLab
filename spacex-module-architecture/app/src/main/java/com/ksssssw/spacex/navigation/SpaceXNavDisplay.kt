@@ -28,9 +28,7 @@ fun SpaceXNavDisplay(
         entryProvider = entryProvider {
             rocketsScreen()
 
-            crewScreen(
-                onNavigationToCompany = backStack::navigateToCompany
-            )
+            crewScreen()
 
             companyScreen()
         }

@@ -4,6 +4,7 @@ import android.app.Application
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import com.ksssssw.crew.di.crewModule
 import com.ksssssw.rockets.di.rocketsModule
 import com.ksssssw.spacex.data.di.dataModule
 import com.ksssssw.spacex.network.di.networkModule
@@ -26,6 +27,7 @@ class SpaceXApplication: Application(), SingletonImageLoader.Factory {
                 networkModule,
                 dataModule,
                 rocketsModule,
+                crewModule,
             )
         }
     }

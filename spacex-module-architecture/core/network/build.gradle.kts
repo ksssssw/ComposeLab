@@ -9,6 +9,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.model)
+    
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.logging)
