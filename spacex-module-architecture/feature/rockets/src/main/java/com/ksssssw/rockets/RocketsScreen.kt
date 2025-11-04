@@ -1,36 +1,78 @@
 package com.ksssssw.rockets
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import com.ksssssw.spacex.model.Rocket
+import com.ksssssw.ui.preview.RocketsPreviewParameterProvider
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun RocketsScreen() {
+internal fun RocketsScreen(
+    modifier: Modifier = Modifier,
+    viewModel: RocketsViewModel = koinViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    RocketsScreen(
+        uiState = uiState,
+        modifier = modifier
+    )
+}
+
+@Composable
+internal fun RocketsScreen(
+    uiState: RocketsUiState,
+    modifier: Modifier = Modifier
+) {
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxSize()
     ) {
-        Text(
-            text = "Rockets Screen"
-        )
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(
+                items = uiState.rockets,
+                key = { it.id }
+            ) { rocket ->
+                RocketItem(
+                    name = rocket.name,
+                    description = rocket.description,
+                    imageUrl = rocket.flickrImages.first()
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun RocketItem(
+    name: String,
+    description: String,
+    imageUrl: String,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -39,22 +81,29 @@ fun RocketItem(
             .padding(vertical = 8.dp)
             .fillMaxWidth()
     ) {
-        // FIXME: 이미지 컴포넌트로 변경해야 함
-        Box(
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = name,
             modifier = Modifier
                 .size(56.dp)
-                .background(
-                    color = Color(255, 200, 200),
-                    shape = RoundedCornerShape(8.dp)
-                )
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop
         )
 
         Column(
             modifier = Modifier.padding(start = 16.dp)
         ) {
-            Text("Falcon 1")
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleMedium
+            )
 
-            Text("Falcon 1")
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -62,11 +111,22 @@ fun RocketItem(
 @Preview(showBackground = true)
 @Composable
 fun RocketItemPreview() {
-    RocketItem()
+    RocketItem(
+        name = "Falcon 1",
+        description = "Falcon 9 is a two-stage rocket designed and manufactured by SpaceX for the reliable and safe transport of satellites and the Dragon spacecraft into orbit.",
+        imageUrl = "https://farm5.staticflickr.com/4599/38583829295_581f34dd84_b.jpg"
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun RocketsScreenPreview() {
-    RocketsScreen()
+fun RocketsScreenPreview(
+    @PreviewParameter(RocketsPreviewParameterProvider::class)
+    rockets: List<Rocket>
+) {
+    RocketsScreen(
+        uiState = RocketsUiState(
+            rockets = rockets
+        )
+    )
 }

@@ -29,7 +29,9 @@ android {
 
 dependencies {
     implementation(projects.core.ui)
-    implementation(projects.core.datasource)
+    implementation(projects.core.network)
+    implementation(projects.core.data)
+
     implementation(projects.feature.rockets)
     implementation(projects.feature.crew)
     implementation(projects.feature.company)
@@ -43,7 +45,11 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    
+
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.network.ktor)
+    implementation(libs.coil.kt.compose)
+
     // 테스트 의존성들
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
