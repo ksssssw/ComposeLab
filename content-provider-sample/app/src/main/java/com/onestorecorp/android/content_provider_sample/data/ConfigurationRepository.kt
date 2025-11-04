@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.serialization.json.Json
+import androidx.core.net.toUri
 
 class ConfigurationRepository(private val context: Context) {
     
@@ -24,7 +25,7 @@ class ConfigurationRepository(private val context: Context) {
     companion object {
         private const val AUTHORITY = "com.onestorecorp.android.cp_tracer.provider"
         private const val PATH_CONFIGURATION = "configuration"
-        private val CONTENT_URI: Uri = Uri.parse("content://$AUTHORITY/$PATH_CONFIGURATION")
+        private val CONTENT_URI: Uri = "content://$AUTHORITY/$PATH_CONFIGURATION".toUri()
         private const val COLUMN_CONFIGURATION = "configuration"
     }
     

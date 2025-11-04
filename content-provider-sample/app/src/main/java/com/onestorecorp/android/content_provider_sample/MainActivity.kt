@@ -22,10 +22,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.onestorecorp.android.content_provider_sample.ui.ConfigurationViewModel
 import com.onestorecorp.android.content_provider_sample.ui.theme.ContentprovidersampleTheme
-import com.onestorecorp.android.tracer.data.AppConfiguration
+import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,9 +43,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ConfigurationDisplayScreen(
     modifier: Modifier = Modifier,
-    viewModel: ConfigurationViewModel = viewModel()
+    viewModel: ConfigurationViewModel = koinViewModel()
 ) {
-    val configuration by viewModel.configuration.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     
     Column(
         modifier = modifier
@@ -85,12 +84,12 @@ fun ConfigurationDisplayScreen(
                 
                 ConfigItem(
                     label = "Base URL",
-                    value = configuration.serverConfiguration.baseUrl.ifEmpty { "(설정 없음)" }
+                    value = uiState.configuration.serverConfiguration.baseUrl.ifEmpty { "(설정 없음)" }
                 )
                 
                 ConfigItem(
                     label = "Image Base URL",
-                    value = configuration.serverConfiguration.imageBaseUrl.ifEmpty { "(설정 없음)" }
+                    value = uiState.configuration.serverConfiguration.imageBaseUrl.ifEmpty { "(설정 없음)" }
                 )
             }
         }
@@ -113,12 +112,12 @@ fun ConfigurationDisplayScreen(
                 
                 ConfigItem(
                     label = "로그 활성화",
-                    value = if (configuration.featureConfiguration.isLogEnabled) "ON" else "OFF"
+                    value = if (uiState.configuration.featureConfiguration.isLogEnabled) "ON" else "OFF"
                 )
                 
                 ConfigItem(
                     label = "캡처 활성화",
-                    value = if (configuration.featureConfiguration.isCaptureEnabled) "ON" else "OFF"
+                    value = if (uiState.configuration.featureConfiguration.isCaptureEnabled) "ON" else "OFF"
                 )
             }
         }

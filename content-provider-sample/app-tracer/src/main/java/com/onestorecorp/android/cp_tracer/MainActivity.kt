@@ -7,14 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,10 +30,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.onestorecorp.android.cp_tracer.ui.ConfigurationUiEvent
 import com.onestorecorp.android.cp_tracer.ui.ConfigurationViewModel
 import com.onestorecorp.android.cp_tracer.ui.theme.ContentprovidersampleTheme
+import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,21 +59,31 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ConfigurationScreen(
     modifier: Modifier = Modifier,
-    viewModel: ConfigurationViewModel = viewModel()
+    viewModel: ConfigurationViewModel = koinViewModel()
 ) {
-    val configuration by viewModel.configuration.collectAsState()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val focusManager = LocalFocusManager.current
+    val uiState by viewModel.uiState.collectAsState()
     
-    var baseUrl by remember(configuration.serverConfiguration.baseUrl) {
-        mutableStateOf(configuration.serverConfiguration.baseUrl)
+    // onResume 시점에 configuration 로드
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onEvent(ConfigurationUiEvent.LoadConfiguration)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
-    var imageBaseUrl by remember(configuration.serverConfiguration.imageBaseUrl) {
-        mutableStateOf(configuration.serverConfiguration.imageBaseUrl)
+    
+    var baseUrl by remember(uiState.configuration.serverConfiguration.baseUrl) {
+        mutableStateOf(uiState.configuration.serverConfiguration.baseUrl)
     }
-    var isLogEnabled by remember(configuration.featureConfiguration.isLogEnabled) {
-        mutableStateOf(configuration.featureConfiguration.isLogEnabled)
-    }
-    var isCaptureEnabled by remember(configuration.featureConfiguration.isCaptureEnabled) {
-        mutableStateOf(configuration.featureConfiguration.isCaptureEnabled)
+    var imageBaseUrl by remember(uiState.configuration.serverConfiguration.imageBaseUrl) {
+        mutableStateOf(uiState.configuration.serverConfiguration.imageBaseUrl)
     }
     
     Column(
@@ -80,6 +97,12 @@ fun ConfigurationScreen(
             text = "CP Tracer",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        Text(
+            text = "설정 변경 시 자동 저장됩니다",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary
         )
         
         // Server Configuration Section
@@ -103,7 +126,17 @@ fun ConfigurationScreen(
                     onValueChange = { baseUrl = it },
                     label = { Text("Base URL") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            viewModel.onEvent(
+                                ConfigurationUiEvent.UpdateServerUrl(baseUrl, imageBaseUrl),
+                                context
+                            )
+                        }
+                    )
                 )
                 
                 OutlinedTextField(
@@ -111,7 +144,17 @@ fun ConfigurationScreen(
                     onValueChange = { imageBaseUrl = it },
                     label = { Text("Image Base URL") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            viewModel.onEvent(
+                                ConfigurationUiEvent.UpdateServerUrl(baseUrl, imageBaseUrl),
+                                context
+                            )
+                        }
+                    )
                 )
             }
         }
@@ -139,8 +182,13 @@ fun ConfigurationScreen(
                 ) {
                     Text(text = "로그 활성화")
                     Switch(
-                        checked = isLogEnabled,
-                        onCheckedChange = { isLogEnabled = it }
+                        checked = uiState.configuration.featureConfiguration.isLogEnabled,
+                        onCheckedChange = { 
+                            viewModel.onEvent(
+                                ConfigurationUiEvent.UpdateLogEnabled(it),
+                                context
+                            )
+                        }
                     )
                 }
                 
@@ -151,25 +199,16 @@ fun ConfigurationScreen(
                 ) {
                     Text(text = "캡처 활성화")
                     Switch(
-                        checked = isCaptureEnabled,
-                        onCheckedChange = { isCaptureEnabled = it }
+                        checked = uiState.configuration.featureConfiguration.isCaptureEnabled,
+                        onCheckedChange = { 
+                            viewModel.onEvent(
+                                ConfigurationUiEvent.UpdateCaptureEnabled(it),
+                                context
+                            )
+                        }
                     )
                 }
             }
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Save Button
-        Button(
-            onClick = {
-                viewModel.updateServerConfiguration(baseUrl, imageBaseUrl)
-                viewModel.updateFeatureConfiguration(isLogEnabled, isCaptureEnabled)
-                viewModel.saveConfiguration()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("설정 저장")
         }
     }
 }
