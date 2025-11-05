@@ -22,7 +22,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,12 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import com.onestorecorp.android.cp_tracer.ui.ConfigurationUiEvent
 import com.onestorecorp.android.cp_tracer.ui.ConfigurationViewModel
 import com.onestorecorp.android.cp_tracer.ui.theme.ContentprovidersampleTheme
 import org.koin.androidx.compose.koinViewModel
@@ -62,22 +57,8 @@ fun ConfigurationScreen(
     viewModel: ConfigurationViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val focusManager = LocalFocusManager.current
     val uiState by viewModel.uiState.collectAsState()
-    
-    // onResume 시점에 configuration 로드
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.onEvent(ConfigurationUiEvent.LoadConfiguration)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
     
     var baseUrl by remember(uiState.configuration.serverConfiguration.baseUrl) {
         mutableStateOf(uiState.configuration.serverConfiguration.baseUrl)
@@ -131,10 +112,7 @@ fun ConfigurationScreen(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             focusManager.clearFocus()
-                            viewModel.onEvent(
-                                ConfigurationUiEvent.UpdateServerUrl(baseUrl, imageBaseUrl),
-                                context
-                            )
+                            viewModel.updateServerUrl(context, baseUrl, imageBaseUrl)
                         }
                     )
                 )
@@ -149,10 +127,7 @@ fun ConfigurationScreen(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             focusManager.clearFocus()
-                            viewModel.onEvent(
-                                ConfigurationUiEvent.UpdateServerUrl(baseUrl, imageBaseUrl),
-                                context
-                            )
+                            viewModel.updateServerUrl(context, baseUrl, imageBaseUrl)
                         }
                     )
                 )
@@ -184,10 +159,7 @@ fun ConfigurationScreen(
                     Switch(
                         checked = uiState.configuration.featureConfiguration.isLogEnabled,
                         onCheckedChange = { 
-                            viewModel.onEvent(
-                                ConfigurationUiEvent.UpdateLogEnabled(it),
-                                context
-                            )
+                            viewModel.updateLogEnabled(context, it)
                         }
                     )
                 }
@@ -201,10 +173,7 @@ fun ConfigurationScreen(
                     Switch(
                         checked = uiState.configuration.featureConfiguration.isCaptureEnabled,
                         onCheckedChange = { 
-                            viewModel.onEvent(
-                                ConfigurationUiEvent.UpdateCaptureEnabled(it),
-                                context
-                            )
+                            viewModel.updateCaptureEnabled(context, it)
                         }
                     )
                 }

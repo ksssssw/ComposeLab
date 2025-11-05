@@ -3,7 +3,6 @@ package com.onestorecorp.android.cp_tracer.ui
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.onestorecorp.android.tracer.data.FeatureConfiguration
 import com.onestorecorp.android.tracer.data.ServerConfiguration
 import com.onestorecorp.android.tracer.provider.ConfigurationProvider
 import com.onestorecorp.android.tracer.storage.ConfigurationStorage
@@ -20,22 +19,8 @@ class ConfigurationViewModel(
     private val _uiState = MutableStateFlow(ConfigurationUiState())
     val uiState: StateFlow<ConfigurationUiState> = _uiState.asStateFlow()
     
-    fun onEvent(event: ConfigurationUiEvent, context: Context? = null) {
-        when (event) {
-            is ConfigurationUiEvent.LoadConfiguration -> loadConfiguration()
-            is ConfigurationUiEvent.UpdateServerUrl -> {
-                requireNotNull(context) { "Context is required for UpdateServerUrl" }
-                updateServerConfiguration(context, event.baseUrl, event.imageBaseUrl)
-            }
-            is ConfigurationUiEvent.UpdateLogEnabled -> {
-                requireNotNull(context) { "Context is required for UpdateLogEnabled" }
-                updateLogEnabled(context, event.enabled)
-            }
-            is ConfigurationUiEvent.UpdateCaptureEnabled -> {
-                requireNotNull(context) { "Context is required for UpdateCaptureEnabled" }
-                updateCaptureEnabled(context, event.enabled)
-            }
-        }
+    init {
+        loadConfiguration()
     }
     
     private fun loadConfiguration() {
@@ -51,7 +36,7 @@ class ConfigurationViewModel(
         }
     }
     
-    private fun updateServerConfiguration(context: Context, baseUrl: String, imageBaseUrl: String) {
+    fun updateServerUrl(context: Context, baseUrl: String, imageBaseUrl: String) {
         val updatedConfig = _uiState.value.configuration.copy(
             serverConfiguration = ServerConfiguration(
                 baseUrl = baseUrl,
@@ -62,7 +47,7 @@ class ConfigurationViewModel(
         saveConfiguration(context)
     }
     
-    private fun updateLogEnabled(context: Context, enabled: Boolean) {
+    fun updateLogEnabled(context: Context, enabled: Boolean) {
         val updatedConfig = _uiState.value.configuration.copy(
             featureConfiguration = _uiState.value.configuration.featureConfiguration.copy(
                 isLogEnabled = enabled
@@ -72,7 +57,7 @@ class ConfigurationViewModel(
         saveConfiguration(context)
     }
     
-    private fun updateCaptureEnabled(context: Context, enabled: Boolean) {
+    fun updateCaptureEnabled(context: Context, enabled: Boolean) {
         val updatedConfig = _uiState.value.configuration.copy(
             featureConfiguration = _uiState.value.configuration.featureConfiguration.copy(
                 isCaptureEnabled = enabled
