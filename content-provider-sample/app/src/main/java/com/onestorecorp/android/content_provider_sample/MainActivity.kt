@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.onestorecorp.android.content_provider_sample.ui.ConfigurationViewModel
 import com.onestorecorp.android.content_provider_sample.ui.theme.ContentprovidersampleTheme
+import com.onestorecorp.android.tracer.data.ServerType
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -32,9 +32,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ContentprovidersampleTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ConfigurationDisplayScreen(modifier = Modifier.padding(innerPadding))
-                }
+                ConfigurationDisplayScreen()
             }
         }
     }
@@ -83,13 +81,33 @@ fun ConfigurationDisplayScreen(
                 )
                 
                 ConfigItem(
+                    label = "Base URL 타입",
+                    value = when (uiState.configuration.serverConfiguration?.base?.type) {
+                        ServerType.PROD -> "Production"
+                        ServerType.QA -> "QA"
+                        ServerType.CUSTOM -> "Custom"
+                        null -> "Production (기본값)"
+                    }
+                )
+                
+                ConfigItem(
+                    label = "Image URL 타입",
+                    value = when (uiState.configuration.serverConfiguration?.image?.type) {
+                        ServerType.PROD -> "Production"
+                        ServerType.QA -> "QA"
+                        ServerType.CUSTOM -> "Custom"
+                        null -> "Production (기본값)"
+                    }
+                )
+                
+                ConfigItem(
                     label = "Base URL",
-                    value = uiState.configuration.serverConfiguration.baseUrl.ifEmpty { "(설정 없음)" }
+                    value = uiState.configuration.serverConfiguration?.base?.url?.ifEmpty { "(설정 없음)" } ?: "(기본값)"
                 )
                 
                 ConfigItem(
                     label = "Image Base URL",
-                    value = uiState.configuration.serverConfiguration.imageBaseUrl.ifEmpty { "(설정 없음)" }
+                    value = uiState.configuration.serverConfiguration?.image?.url?.ifEmpty { "(설정 없음)" } ?: "(기본값)"
                 )
             }
         }
@@ -112,12 +130,12 @@ fun ConfigurationDisplayScreen(
                 
                 ConfigItem(
                     label = "로그 활성화",
-                    value = if (uiState.configuration.featureConfiguration.isLogEnabled) "ON" else "OFF"
+                    value = if (uiState.configuration.featureConfiguration?.isLogEnabled == true) "ON" else "OFF"
                 )
                 
                 ConfigItem(
                     label = "캡처 활성화",
-                    value = if (uiState.configuration.featureConfiguration.isCaptureEnabled) "ON" else "OFF"
+                    value = if (uiState.configuration.featureConfiguration?.isCaptureEnabled == true) "ON" else "OFF"
                 )
             }
         }

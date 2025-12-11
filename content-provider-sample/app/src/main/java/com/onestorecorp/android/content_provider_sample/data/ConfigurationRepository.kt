@@ -43,7 +43,7 @@ class ConfigurationRepository(private val context: Context) {
     
     fun getConfiguration(): AppConfiguration {
         if (!isProviderAvailable()) {
-            return AppConfiguration()
+            return getDefaultConfiguration()
         }
         
         return try {
@@ -60,54 +60,74 @@ class ConfigurationRepository(private val context: Context) {
                     val columnIndex = it.getColumnIndex(COLUMN_CONFIGURATION)
                     if (columnIndex >= 0) {
                         val jsonString = it.getString(columnIndex)
-                        json.decodeFromString<AppConfiguration>(jsonString)
+                        val config = json.decodeFromString<AppConfiguration>(jsonString)
+                        normalizeConfiguration(config)
                     } else {
-                        AppConfiguration()
+                        getDefaultConfiguration()
                     }
                 } else {
-                    AppConfiguration()
+                    getDefaultConfiguration()
                 }
-            } ?: AppConfiguration()
+            } ?: getDefaultConfiguration()
         } catch (e: Exception) {
             e.printStackTrace()
-            AppConfiguration()
+            getDefaultConfiguration()
         }
     }
     
-    fun observeConfiguration(): Flow<AppConfiguration> = callbackFlow {
-        // Emit initial value immediately
-        trySend(getConfiguration())
-        
-        // Only register observer if provider is available
-        if (!isProviderAvailable()) {
-            awaitClose {
-                // No observer to unregister
-            }
-            return@callbackFlow
-        }
-        
-        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) {
-                trySend(getConfiguration())
-            }
-        }
-        
-        try {
-            contentResolver.registerContentObserver(CONTENT_URI, true, observer)
-            
-            awaitClose {
-                try {
-                    contentResolver.unregisterContentObserver(observer)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            awaitClose {
-                // Registration failed, nothing to clean up
-            }
-        }
+    private fun getDefaultConfiguration(): AppConfiguration {
+        return AppConfiguration(
+            serverConfiguration = com.onestorecorp.android.tracer.data.ServerConfiguration(),
+            featureConfiguration = com.onestorecorp.android.tracer.data.FeatureConfiguration()
+        )
     }
+    
+    private fun normalizeConfiguration(config: AppConfiguration): AppConfiguration {
+        val normalizedServerConfig = config.serverConfiguration 
+            ?: com.onestorecorp.android.tracer.data.ServerConfiguration()
+        val normalizedFeatureConfig = config.featureConfiguration 
+            ?: com.onestorecorp.android.tracer.data.FeatureConfiguration()
+            
+        return AppConfiguration(
+            serverConfiguration = normalizedServerConfig,
+            featureConfiguration = normalizedFeatureConfig
+        )
+    }
+    
+//    fun observeConfiguration(): Flow<AppConfiguration> = callbackFlow {
+//        // Emit initial value immediately
+//        trySend(getConfiguration())
+//
+//        // Only register observer if provider is available
+//        if (!isProviderAvailable()) {
+//            awaitClose {
+//                // No observer to unregister
+//            }
+//            return@callbackFlow
+//        }
+//
+//        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+//            override fun onChange(selfChange: Boolean) {
+//                trySend(getConfiguration())
+//            }
+//        }
+//
+//        try {
+//            contentResolver.registerContentObserver(CONTENT_URI, true, observer)
+//
+//            awaitClose {
+//                try {
+//                    contentResolver.unregisterContentObserver(observer)
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                }
+//            }
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            awaitClose {
+//                // Registration failed, nothing to clean up
+//            }
+//        }
+//    }
 }
 

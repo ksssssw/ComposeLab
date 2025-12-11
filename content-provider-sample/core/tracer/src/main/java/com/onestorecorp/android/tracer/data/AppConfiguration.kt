@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AppConfiguration(
-    val serverConfiguration: ServerConfiguration = ServerConfiguration(),
-    val featureConfiguration: FeatureConfiguration = FeatureConfiguration()
+    val serverConfiguration: ServerConfiguration? = null,
+    val featureConfiguration: FeatureConfiguration? = null
 )
 

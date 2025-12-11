@@ -2,10 +2,12 @@ package com.onestorecorp.android.tracer.storage
 
 import android.content.Context
 import com.onestorecorp.android.tracer.data.AppConfiguration
+import com.onestorecorp.android.tracer.provider.ConfigurationProvider
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import androidx.core.content.edit
 
-class ConfigurationStorage(context: Context) {
+class ConfigurationStorage(private val context: Context) {
     private val sharedPreferences = context.getSharedPreferences(
         "configuration_prefs",
         Context.MODE_PRIVATE
@@ -18,9 +20,15 @@ class ConfigurationStorage(context: Context) {
     
     fun saveConfiguration(config: AppConfiguration) {
         val jsonString = json.encodeToString(config)
-        sharedPreferences.edit()
-            .putString(KEY_CONFIGURATION, jsonString)
-            .apply()
+        sharedPreferences.edit {
+            putString(KEY_CONFIGURATION, jsonString)
+        }
+        
+        // Content Provider에 변경 알림
+        context.contentResolver.notifyChange(
+            ConfigurationProvider.CONTENT_URI,
+            null
+        )
     }
     
     fun loadConfiguration(): AppConfiguration {

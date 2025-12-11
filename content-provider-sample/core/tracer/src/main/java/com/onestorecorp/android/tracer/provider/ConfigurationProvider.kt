@@ -10,6 +10,7 @@ import com.onestorecorp.android.tracer.data.AppConfiguration
 import com.onestorecorp.android.tracer.storage.ConfigurationStorage
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import androidx.core.net.toUri
 
 class ConfigurationProvider : ContentProvider() {
     
@@ -29,7 +30,7 @@ class ConfigurationProvider : ContentProvider() {
             addURI(AUTHORITY, PATH_CONFIGURATION, CODE_CONFIGURATION)
         }
         
-        val CONTENT_URI: Uri = Uri.parse("content://$AUTHORITY/$PATH_CONFIGURATION")
+        val CONTENT_URI: Uri = "content://$AUTHORITY/$PATH_CONFIGURATION".toUri()
         
         // Cursor columns
         const val COLUMN_CONFIGURATION = "configuration"
@@ -45,7 +46,7 @@ class ConfigurationProvider : ContentProvider() {
         projection: Array<out String>?,
         selection: String?,
         selectionArgs: Array<out String>?,
-        sortOrder: String?
+        sortOrder: String?,
     ): Cursor? {
         return when (uriMatcher.match(uri)) {
             CODE_CONFIGURATION -> {
@@ -81,7 +82,7 @@ class ConfigurationProvider : ContentProvider() {
         uri: Uri,
         values: ContentValues?,
         selection: String?,
-        selectionArgs: Array<out String>?
+        selectionArgs: Array<out String>?,
     ): Int {
         return when (uriMatcher.match(uri)) {
             CODE_CONFIGURATION -> {

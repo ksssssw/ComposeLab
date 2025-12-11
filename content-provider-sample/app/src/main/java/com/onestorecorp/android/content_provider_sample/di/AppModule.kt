@@ -27,4 +27,3 @@ val appModule = module {
         ConfigurationViewModel(get())
     }
 }
-
