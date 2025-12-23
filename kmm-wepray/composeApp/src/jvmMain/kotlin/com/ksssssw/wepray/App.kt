@@ -1,49 +1,53 @@
 package com.ksssssw.wepray
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
-
-import wepray.composeapp.generated.resources.Res
-import wepray.composeapp.generated.resources.compose_multiplatform
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
+import com.ksssssw.wepray.ui.layout.WePrayScaffold
+import com.ksssssw.wepray.ui.layout.WePraySideRail
+import com.ksssssw.wepray.ui.navigation.TopLevelDestination
+import com.ksssssw.wepray.ui.scene.deeplinker.deepLinkerScene
+import com.ksssssw.wepray.ui.scene.devices.devicesScene
+import com.ksssssw.wepray.ui.scene.installer.installerScene
+import com.ksssssw.wepray.ui.scene.settings.settingsScene
+import com.ksssssw.wepray.ui.theme.WePrayTheme
 
 @Composable
-@Preview
 fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+    WePrayTheme {
+        val backStack = remember { mutableStateListOf(TopLevelDestination.START_DESTINATION.route) }
+        val currentDestination = backStack.lastOrNull()
+        val topLevelDestination = TopLevelDestination.fromDestination(currentDestination as NavKey)
+        
+        WePrayScaffold(
+            currentTopLevelDestination = topLevelDestination,
+            sideRail = {
+                WePraySideRail(
+                    topLevelDestination = topLevelDestination,
+                    onItemClick = {
+                        backStack.remove(it)
+                        backStack.add(it)
+                    }
+                )
+            },
+            content = {
+                NavDisplay(
+                    backStack = backStack,
+                    onBack = { backStack.removeLastOrNull() },
+                    entryProvider = entryProvider {
+                        devicesScene()
+
+                        installerScene()
+
+                        deepLinkerScene()
+
+                        settingsScene()
+                    }
+                )
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
-            }
-        }
+        )
     }
 }
