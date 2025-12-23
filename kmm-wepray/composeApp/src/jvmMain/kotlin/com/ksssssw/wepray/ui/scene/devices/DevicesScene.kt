@@ -2,26 +2,19 @@ package com.ksssssw.wepray.ui.scene.devices
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.ksssssw.wepray.ui.components.WePrayBasicCard
 import com.ksssssw.wepray.ui.components.WePrayDeviceCard
 import com.ksssssw.wepray.ui.theme.WePrayTheme
 import kotlinx.serialization.Serializable
@@ -47,44 +40,23 @@ fun DevicesScene() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(vertical = WePrayTheme.spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl),
             itemVerticalAlignment = Alignment.CenterVertically
         ) {
+            // FIXME: adb로 획득한 디바이스 목록을 이곳에 표시한다.
             WePrayDeviceCard(
-                modifier = Modifier
-                    .size(width = 350.dp, height = 230.dp),
-                deviceName = "Galaxy S23 Ultra",
                 deviceModel = "SM-S918N",
-                androidVersion = "Android 14 (API 34)",
+                deviceManufacturer = "Samsung",
+                serialNumber = "1234567890",
+                apiLevel = "33",
+                resolution = "1080 x 2408",
+                androidVersion = "14",
                 isSelected = false,
-                isConnected = true,
                 icon = Icons.Outlined.Smartphone,
-                onClick = { println("Device selected") }
-            )
-
-            WePrayDeviceCard(
-                modifier = Modifier
-                    .size(width = 350.dp, height = 230.dp),
-                deviceName = "Galaxy S23 Ultra",
-                deviceModel = "SM-S918N",
-                androidVersion = "Android 14 (API 34)",
-                isSelected = false,
-                isConnected = true,
-                icon = Icons.Outlined.Smartphone,
-                onClick = { println("Device selected") }
-            )
-
-            WePrayDeviceCard(
-                modifier = Modifier
-                    .size(width = 350.dp, height = 230.dp),
-                deviceName = "Galaxy S23 Ultra",
-                deviceModel = "SM-S918N",
-                androidVersion = "Android 14 (API 34)",
-                isSelected = false,
-                isConnected = true,
-                icon = Icons.Outlined.Smartphone,
-                onClick = { println("Device selected") }
+                onCardClick = { /** TODO: 카드를 선택했을 때 액션 추가 */ },
+                onMirroringClick = { /** TODO: 미러링 버튼을 클릭했을 때 액션 추가 */ },
+                onScreenshotClick = { /** TODO: 스크린샷 버튼을 클릭했을 때 액션 추가 */ }
             )
         }
     }

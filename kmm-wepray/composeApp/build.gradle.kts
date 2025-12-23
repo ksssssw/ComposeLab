@@ -27,6 +27,7 @@ kotlin {
             implementation(libs.androidx.nav3.ui)
             implementation(libs.androidx.material3.adaptive)
             implementation(libs.androidx.material3.adaptive.nav3)
+            implementation(libs.koin.core)
 //            implementation(libs.androidx.ui.graphics.android)
         }
         commonTest.dependencies {

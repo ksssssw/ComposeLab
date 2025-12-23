@@ -17,11 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
 import com.ksssssw.wepray.ui.theme.tokens.BorderColor
+import com.ksssssw.wepray.ui.theme.tokens.WePrayGradients
 
 /**
  * WePray Basic Card
@@ -91,21 +92,25 @@ fun WePrayBasicCard(
  */
 @Composable
 fun WePrayDeviceCard(
-    deviceName: String,
     deviceModel: String,
+    deviceManufacturer: String,
+    serialNumber: String,
     androidVersion: String,
+    apiLevel: String,
+    resolution: String,
     isSelected: Boolean = false,
-    isConnected: Boolean = true,
     icon: ImageVector = Icons.Outlined.Smartphone,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onCardClick: () -> Unit = {},
+    onMirroringClick: () -> Unit = {},
+    onScreenshotClick: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
     
-    Row(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
+            .size(width = 360.dp, height = 320.dp)
             .clip(WePrayTheme.shapes.card)
             .background(
                 if (isSelected) 
@@ -125,48 +130,128 @@ fun WePrayDeviceCard(
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = onClick
-            )
-            .padding(WePrayTheme.spacing.xl),
-        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl),
-        verticalAlignment = Alignment.CenterVertically
+                onClick = onCardClick
+            ),
     ) {
-        // 디바이스 아이콘 (50x50)
-        Icon(
-            imageVector = icon,
-            contentDescription = "Device Icon",
-            modifier = Modifier.size(50.dp),
-            tint = if (isSelected) WePrayTheme.colors.primary else WePrayTheme.colors.onSurfaceVariant
-        )
-        
-        // 디바이스 정보 (Flex-1)
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(WePrayTheme.spacing.xl),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = deviceName,
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurface
-            )
-            
-            Text(
-                text = deviceModel,
-                style = WePrayTheme.typography.bodyMedium,
-                color = WePrayTheme.colors.onSurfaceVariant
-            )
-            
-            Text(
-                text = androidVersion,
-                style = WePrayTheme.typography.bodySmall,
-                color = WePrayTheme.colors.onSurfaceVariant
-            )
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(WePrayTheme.shapes.card)
+                    .background(
+                        WePrayGradients.Rainbow
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                // 디바이스 아이콘 (50x50)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = "Device Icon",
+                    modifier = Modifier.size(32.dp),
+                    tint = WePrayTheme.colors.onSurface
+                )
+            }
+
+            // 디바이스 정보 (Flex-1)
+            Column(
+                modifier = modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+            ) {
+                // Model Name (Title)
+                Text(
+                    text = deviceModel,
+                    style = WePrayTheme.typography.bodyLarge,
+                    color = WePrayTheme.colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                // 2-Column Grid for Device Details
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+                ) {
+                    // Left Column
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+                    ) {
+                        InfoItem(
+                            label = "제조사",
+                            value = deviceManufacturer
+                        )
+                        InfoItem(
+                            label = "Serial",
+                            value = serialNumber
+                        )
+                    }
+
+                    // Right Column
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+                    ) {
+                        InfoItem(
+                            label = "Android",
+                            value = "$androidVersion (API ${apiLevel})"
+                        )
+                        InfoItem(
+                            label = "해상도",
+                            value = resolution
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+            ) {
+                WePrayPrimaryButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Mirroring",
+                    onClick = onMirroringClick,
+                    size = ButtonSize.Default,
+                    enabled = true
+                )
+
+                WePraySecondaryButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Screenshot",
+                    onClick = onScreenshotClick,
+                    size = ButtonSize.Default,
+                    enabled = true
+                )
+            }
         }
-        
-        // 상태 배지
-        WePrayBadge(
-            text = if (isConnected) "연결됨" else "연결 안됨",
-            variant = if (isConnected) BadgeVariant.Success else BadgeVariant.Error
+    }
+}
+
+@Composable
+private fun InfoItem(
+    label: String,
+    value: String
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            style = WePrayTheme.typography.labelMedium,
+            color = WePrayTheme.colors.onSurfaceVariant
+        )
+
+        Text(
+            text = value,
+            style = WePrayTheme.typography.labelLarge,
+            color = WePrayTheme.colors.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -203,34 +288,42 @@ private fun CardPreview() {
             
             // Device Card - Connected
             WePrayDeviceCard(
-                deviceName = "Galaxy S23 Ultra",
                 deviceModel = "SM-S918N",
+                deviceManufacturer = "Samsung",
+                serialNumber = "1234567890",
+                apiLevel = "33",
+                resolution = "1080 x 2408",
                 androidVersion = "Android 14 (API 34)",
                 isSelected = false,
-                isConnected = true,
                 icon = Icons.Outlined.Smartphone,
-                onClick = { println("Device selected") }
+                onCardClick = { println("Device selected") },
+                onMirroringClick = { println("Mirroring clicked") },
+                onScreenshotClick = { println("Screenshot clicked") }
             )
             
             // Device Card - Selected
             WePrayDeviceCard(
-                deviceName = "Pixel 8 Pro",
-                deviceModel = "Pixel 8 Pro",
+                deviceModel = "SM-S918N",
+                deviceManufacturer = "Samsung",
+                serialNumber = "1234567890",
+                apiLevel = "33",
+                resolution = "1080 x 2408",
                 androidVersion = "Android 14 (API 34)",
                 isSelected = true,
-                isConnected = true,
                 icon = Icons.Outlined.Android,
-                onClick = { println("Device selected") }
+                onCardClick = { println("Device selected") }
             )
             
             // Device Card - Disconnected
             WePrayDeviceCard(
-                deviceName = "Galaxy Tab S9",
-                deviceModel = "SM-X910",
-                androidVersion = "Android 13 (API 33)",
+                deviceModel = "SM-S918N",
+                deviceManufacturer = "Samsung",
+                serialNumber = "1234567890",
+                apiLevel = "33",
+                resolution = "1080 x 2408",
+                androidVersion = "Android 14 (API 34)",
                 isSelected = false,
-                isConnected = false,
-                onClick = { println("Device selected") }
+                onCardClick = { println("Device selected") }
             )
         }
     }
