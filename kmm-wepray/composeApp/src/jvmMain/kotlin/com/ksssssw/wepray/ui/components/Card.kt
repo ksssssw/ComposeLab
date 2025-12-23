@@ -99,6 +99,7 @@ fun WePrayDeviceCard(
     apiLevel: String,
     resolution: String,
     isSelected: Boolean = false,
+    isConnected: Boolean = true,
     icon: ImageVector = Icons.Outlined.Smartphone,
     modifier: Modifier = Modifier,
     onCardClick: () -> Unit = {},
@@ -217,7 +218,7 @@ fun WePrayDeviceCard(
                     text = "Mirroring",
                     onClick = onMirroringClick,
                     size = ButtonSize.Default,
-                    enabled = true
+                    enabled = isConnected
                 )
 
                 WePraySecondaryButton(
@@ -225,7 +226,7 @@ fun WePrayDeviceCard(
                     text = "Screenshot",
                     onClick = onScreenshotClick,
                     size = ButtonSize.Default,
-                    enabled = true
+                    enabled = isConnected
                 )
             }
         }
