@@ -1,13 +1,19 @@
 package com.ksssssw.wepray.ui.scene.devices
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Smartphone
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -17,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.ksssssw.wepray.domain.model.Device
 import com.ksssssw.wepray.domain.model.DeviceStatus
 import com.ksssssw.wepray.ui.components.WePrayDeviceCard
 import com.ksssssw.wepray.ui.theme.WePrayTheme
@@ -35,68 +42,44 @@ internal fun EntryProviderScope<NavKey>.devicesScene() {
 
 @Composable
 fun DevicesScene(
-    viewModel: DevicesViewModel = koinViewModel()
+    viewModel: DevicesViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+    val deviceState by viewModel.deviceState.collectAsStateWithLifecycle()
+
     DevicesContent(
-        uiState = uiState,
-        onEvent = viewModel::onEvent
+        deviceState = deviceState,
+        onDeviceSelect = viewModel::selectDevice
     )
 }
 
 @Composable
 private fun DevicesContent(
-    uiState: DevicesUiState,
-    onEvent: (DevicesEvent) -> Unit
+    deviceState: DevicesUiState,
+    onDeviceSelect: (Device) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // 새로고침 버튼
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = WePrayTheme.spacing.xl),
-            horizontalArrangement = Arrangement.End
-        ) {
-            FilledTonalButton(
-                onClick = { onEvent(DevicesEvent.Refresh) },
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = WePrayTheme.colors.primary.copy(alpha = 0.2f),
-                    contentColor = WePrayTheme.colors.primary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Refresh,
-                    contentDescription = "Refresh",
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("새로고침")
-            }
-        }
-        
         // UI 상태에 따른 콘텐츠
-        when (uiState) {
+        when (deviceState) {
             is DevicesUiState.Loading -> {
                 LoadingState()
             }
+
             is DevicesUiState.Success -> {
-                if (uiState.devices.isEmpty()) {
+                if (deviceState.devices.isEmpty()) {
                     EmptyState()
                 } else {
                     DeviceList(
-                        devices = uiState.devices,
-                        selectedDevice = uiState.selectedDevice,
-                        onDeviceSelect = { device ->
-                            onEvent(DevicesEvent.SelectDevice(device))
-                        }
+                        devices = deviceState.devices,
+                        selectedDevice = deviceState.selectedDevice,
+                        onDeviceSelect = onDeviceSelect
                     )
                 }
             }
+
             is DevicesUiState.Error -> {
-                ErrorState(message = uiState.message)
+                ErrorState(message = deviceState.message)
             }
         }
     }
@@ -182,12 +165,12 @@ private fun ErrorState(message: String) {
 
 @Composable
 private fun DeviceList(
-    devices: List<com.ksssssw.wepray.domain.model.Device>,
-    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
-    onDeviceSelect: (com.ksssssw.wepray.domain.model.Device) -> Unit
+    devices: List<Device>,
+    selectedDevice: Device?,
+    onDeviceSelect: (Device) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -221,26 +204,26 @@ private fun DeviceList(
     }
 }
 
-@Preview
-@Composable
-fun DevicesScenePreview() {
-    WePrayTheme {
-        DevicesContent(
-            uiState = DevicesUiState.Success(
-                devices = listOf(
-                    com.ksssssw.wepray.domain.model.Device(
-                        serialNumber = "1234567890",
-                        modelName = "SM-S918N",
-                        manufacturer = "Samsung",
-                        resolution = "1080x2400",
-                        androidVersion = "14",
-                        sdkVersion = "34",
-                        status = DeviceStatus.CONNECTED
-                    )
-                ),
-                selectedDevice = null
-            ),
-            onEvent = {}
-        )
-    }
-}
+//@Preview
+//@Composable
+//fun DevicesScenePreview() {
+//    WePrayTheme {
+//        DevicesContent(
+//            uiState = DevicesUiState.Success(
+//                devices = listOf(
+//                    Device(
+//                        serialNumber = "1234567890",
+//                        modelName = "SM-S918N",
+//                        manufacturer = "Samsung",
+//                        resolution = "1080x2400",
+//                        androidVersion = "14",
+//                        sdkVersion = "34",
+//                        status = DeviceStatus.CONNECTED
+//                    )
+//                )
+//            ),
+//            selectedDevice = null,
+//            onEvent = {}
+//        )
+//    }
+//}

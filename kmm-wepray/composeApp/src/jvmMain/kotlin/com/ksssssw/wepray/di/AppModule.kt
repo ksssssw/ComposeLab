@@ -1,9 +1,10 @@
 package com.ksssssw.wepray.di
 
+import com.ksssssw.wepray.WePrayAppViewModel
 import com.ksssssw.wepray.data.adb.AdbManager
 import com.ksssssw.wepray.data.repository.DeviceRepositoryImpl
 import com.ksssssw.wepray.domain.repository.DeviceRepository
-import com.ksssssw.wepray.domain.usecase.GetDevicesUseCase
+import com.ksssssw.wepray.domain.usecase.RefreshDevicesUseCase
 import com.ksssssw.wepray.ui.scene.devices.DevicesViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -30,7 +31,7 @@ val dataModule = module {
  */
 val domainModule = module {
     // Use Cases - Factory (매번 새 인스턴스)
-    factory { GetDevicesUseCase(get()) }
+    factory { RefreshDevicesUseCase(get()) }
 }
 
 /**
@@ -38,6 +39,10 @@ val domainModule = module {
  */
 val uiModule = module {
     // ViewModels
+    // 앱 전역 ViewModel - Repository 주입
+    viewModelOf(::WePrayAppViewModel)
+    
+    // Devices 화면 ViewModel - Repository 주입 (ViewModel 간 의존성 없음)
     viewModelOf(::DevicesViewModel)
 }
 

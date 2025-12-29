@@ -3,88 +3,51 @@ package com.ksssssw.wepray.ui.scene.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ksssssw.wepray.domain.model.Device
-import com.ksssssw.wepray.domain.usecase.GetDevicesUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.ksssssw.wepray.domain.repository.DeviceRepository
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
  * Devices 화면의 ViewModel
  * NowInAndroid 스타일의 아키텍처 패턴을 따릅니다.
- * 
+ *
  * - StateFlow로 UI 상태 관리
- * - Single source of truth
+ * - Single source of truth (Repository)
  * - Unidirectional data flow
- * 
+ *
+ * Repository의 Flow를 구독하여 디바이스 목록과 선택 상태를 관리합니다.
+ * ViewModel 간 직접적인 의존성이 없습니다.
+ *
  * @property getDevicesUseCase 디바이스 목록 조회 UseCase
+ * @property deviceRepository 디바이스 Repository (상태 공유)
  */
 class DevicesViewModel(
-    private val getDevicesUseCase: GetDevicesUseCase
+    private val deviceRepository: DeviceRepository,
 ) : ViewModel() {
-    
-    private val _uiState = MutableStateFlow<DevicesUiState>(DevicesUiState.Loading)
-    val uiState: StateFlow<DevicesUiState> = _uiState.asStateFlow()
-    
-    init {
-        loadDevices()
+
+    val deviceState: StateFlow<DevicesUiState> = combine(
+        deviceRepository.observeCachedDevices(),
+        deviceRepository.observeSelectedDevice()
+    ) { devices, selectedDevice ->
+        DevicesUiState.Success(devices = devices, selectedDevice = selectedDevice)
     }
-    
-    /**
-     * 사용자 이벤트를 처리합니다.
-     */
-    fun onEvent(event: DevicesEvent) {
-        when (event) {
-            is DevicesEvent.Refresh -> loadDevices()
-            is DevicesEvent.SelectDevice -> selectDevice(event.device)
-        }
-    }
-    
-    /**
-     * 디바이스 목록을 로드합니다.
-     */
-    private fun loadDevices() {
-        viewModelScope.launch {
-            _uiState.update { DevicesUiState.Loading }
-            
-            getDevicesUseCase()
-                .onSuccess { devices ->
-                    _uiState.update { currentState ->
-                        // 이전 선택 상태 유지
-                        val previousSelection = (currentState as? DevicesUiState.Success)?.selectedDevice
-                        val newSelection = if (previousSelection != null && devices.any { it.serialNumber == previousSelection.serialNumber }) {
-                            devices.find { it.serialNumber == previousSelection.serialNumber }
-                        } else {
-                            null
-                        }
-                        
-                        DevicesUiState.Success(
-                            devices = devices,
-                            selectedDevice = newSelection
-                        )
-                    }
-                }
-                .onFailure { exception ->
-                    _uiState.update {
-                        DevicesUiState.Error(
-                            message = exception.message ?: "Failed to load devices"
-                        )
-                    }
-                }
-        }
-    }
-    
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = DevicesUiState.Loading
+        )
+
     /**
      * 디바이스를 선택합니다.
+     * Repository를 통해 선택 상태를 변경하면 모든 구독자에게 자동으로 전파됩니다.
      */
-    private fun selectDevice(device: Device) {
-        _uiState.update { currentState ->
-            if (currentState is DevicesUiState.Success) {
-                currentState.copy(selectedDevice = device)
-            } else {
-                currentState
-            }
+    fun selectDevice(device: Device) {
+        viewModelScope.launch {
+            deviceRepository.selectDevice(device)
         }
     }
 }
+

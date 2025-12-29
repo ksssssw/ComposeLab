@@ -31,13 +31,10 @@ import com.ksssssw.wepray.ui.theme.WePrayTheme
 @Composable
 fun WePrayScaffold(
     modifier: Modifier = Modifier,
-    currentTopLevelDestination: TopLevelDestination,
+    topBar: @Composable () -> Unit,
     sideRail: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val categories = listOf("홈 화면", "상세 화면", "설정 화면", "프로필 화면")
-    var selectedCategory1 by remember { mutableStateOf<String?>(null) }
-
     Row(
         modifier = modifier
             .fillMaxSize()
@@ -56,31 +53,7 @@ fun WePrayScaffold(
                 modifier = Modifier
                     .padding(horizontal = WePrayTheme.spacing.lg, vertical = WePrayTheme.spacing.md)
             ) {
-                WePrayTopBar(
-                    title = currentTopLevelDestination.label,
-                    description = currentTopLevelDestination.description,
-                    deviceInfo = DeviceInfo(
-                        icon = Icons.Outlined.Smartphone,
-                        name = "Galaxy S23",
-                        model = "Android 14 (API 34)"
-                    ),
-                    actions = {
-                        WePrayDropdown(
-                            modifier = Modifier
-                                .width(180.dp),
-                            value = selectedCategory1,
-                            onValueChange = { selectedCategory1 = it },
-                            items = categories,
-                            placeholder = "카테고리 선택"
-                        )
-
-                        WePrayIconButton(
-                            icon = Icons.Outlined.Refresh,
-                            contentDescription = "Refresh",
-                            onClick = {}
-                        )
-                    }
-                )
+                topBar()
 
                 content()
             }

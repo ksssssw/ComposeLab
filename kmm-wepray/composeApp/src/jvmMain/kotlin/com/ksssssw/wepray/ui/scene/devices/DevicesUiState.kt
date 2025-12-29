@@ -16,10 +16,9 @@ sealed interface DevicesUiState {
      * 성공 상태
      * 
      * @property devices 연결된 디바이스 목록
-     * @property selectedDevice 현재 선택된 디바이스
      */
     data class Success(
-        val devices: List<Device>,
+        val devices: List<Device> = emptyList(),
         val selectedDevice: Device? = null
     ) : DevicesUiState
     
@@ -36,16 +35,16 @@ sealed interface DevicesUiState {
 /**
  * 디바이스 화면에서 발생할 수 있는 사용자 이벤트
  */
-sealed interface DevicesEvent {
-    /**
-     * 새로고침 버튼 클릭
-     */
-    data object Refresh : DevicesEvent
-    
-    /**
-     * 디바이스 선택
-     * 
-     * @property device 선택된 디바이스
-     */
-    data class SelectDevice(val device: Device) : DevicesEvent
-}
+//sealed interface DevicesEvent {
+//    /**
+//     * 새로고침 버튼 클릭
+//     */
+//    data object Refresh : DevicesEvent
+//
+//    /**
+//     * 디바이스 선택
+//     *
+//     * @property device 선택된 디바이스
+//     */
+//    data class SelectDevice(val device: Device) : DevicesEvent
+//}

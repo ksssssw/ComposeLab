@@ -9,7 +9,6 @@ import com.ksssssw.wepray.di.appModules
 import org.koin.core.context.startKoin
 
 fun main() {
-    // Koin 초기화 - Application 시작 전에 먼저 초기화
     startKoin {
         modules(appModules)
     }
@@ -26,7 +25,7 @@ fun main() {
             window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
             window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
 
-            App()
+            WePrayApp()
         }
     }
 }
