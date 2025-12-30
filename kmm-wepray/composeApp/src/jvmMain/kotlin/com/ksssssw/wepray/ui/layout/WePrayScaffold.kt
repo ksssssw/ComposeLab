@@ -2,31 +2,14 @@ package com.ksssssw.wepray.ui.layout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.ksssssw.wepray.ui.components.BadgeVariant
-import com.ksssssw.wepray.ui.components.DeviceInfo
-import com.ksssssw.wepray.ui.components.WePrayBadge
-import com.ksssssw.wepray.ui.components.WePrayDropdown
-import com.ksssssw.wepray.ui.components.WePrayIconButton
-import com.ksssssw.wepray.ui.components.WePrayTopBar
-import com.ksssssw.wepray.ui.navigation.TopLevelDestination
 import com.ksssssw.wepray.ui.theme.WePrayTheme
 
 /**
  * WePray Scaffold
- * 메인 레이아웃 구조: 사이드 레일 + 메인 컨텐츠
- * 
- * @param sideRail 좌측 사이드 레일 컨텐츠
- * @param content 메인 컨텐츠 영역
+ * Main layout structure: Side rail + Top bar + Content
+ * Based on HTML layout with sticky header and sidebar
  */
 @Composable
 fun WePrayScaffold(
@@ -40,21 +23,36 @@ fun WePrayScaffold(
             .fillMaxSize()
             .background(WePrayTheme.colors.background)
     ) {
-        // 좌측 사이드 레일
+        // Left side rail
         sideRail()
         
-        // 메인 컨텐츠 영역
-        Box(
+        // Main content area
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .weight(1f)
         ) {
-            Column(
+            // Top bar
+            Box(
                 modifier = Modifier
-                    .padding(horizontal = WePrayTheme.spacing.lg, vertical = WePrayTheme.spacing.md)
+                    .fillMaxWidth()
+                    .padding(
+                        WePrayTheme.spacing.containerPaddingSmall
+                    )
             ) {
                 topBar()
-
+            }
+            
+            // Content
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = WePrayTheme.spacing.containerPaddingSmall,
+                        end = WePrayTheme.spacing.containerPaddingSmall,
+                        bottom = WePrayTheme.spacing.lg
+                    )
+            ) {
                 content()
             }
         }

@@ -13,21 +13,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.ksssssw.wepray.ui.navigation.TopLevelDestination
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.BorderColor
 
 /**
  * WePray Sidebar Navigation
- * 
- * 디자인 가이드 스펙:
- * - Background: rgba(26, 26, 26, 0.8)
- * - Width: 240px
- * - Border Radius: 12px
- * - Padding: 20px 0
+ * Based on HTML nav design: flex items-center gap-9
  */
 @Composable
 fun WePraySideRail(
@@ -39,21 +32,25 @@ fun WePraySideRail(
         modifier = modifier
             .width(240.dp)
             .fillMaxHeight()
-//            .padding(WePrayTheme.spacing.containerPadding)
+            .padding(
+                start = WePrayTheme.spacing.containerPaddingSmall,
+                top = WePrayTheme.spacing.containerPaddingSmall,
+                bottom = WePrayTheme.spacing.lg
+            )
     ) {
-        // 사이드바 컨테이너
+        // Sidebar container
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .clip(WePrayTheme.shapes.default)
-                .background(WePrayTheme.colors.cardBackground)
+                .clip(WePrayTheme.shapes.card)
+                .background(WePrayTheme.colors.surfaceVariant)
                 .border(
                     width = 1.dp,
-                    color = BorderColor,
-                    shape = WePrayTheme.shapes.default
+                    color = WePrayTheme.colors.border,
+                    shape = WePrayTheme.shapes.card
                 )
-                .padding(vertical = WePrayTheme.spacing.xxxl)
+                .padding(vertical = WePrayTheme.spacing.xl)
         ) {
             TopLevelDestination.entries.forEach {
                 SideRailItemView(
@@ -68,22 +65,7 @@ fun WePraySideRail(
 
 /**
  * Sidebar Item
- * 
- * 디자인 가이드 스펙:
- * - Padding: 15px 25px
- * - Display: Flex gap 15px
- * - Border Left: 3px solid transparent
- * - Text Color: #B3B3B3
- * - Icon Size: 24px
- * 
- * Hover:
- *   - Background: rgba(74, 158, 224, 0.1)
- *   - Text Color: #FFFFFF
- * 
- * Active:
- *   - Background: rgba(74, 158, 224, 0.15)
- *   - Border Left: #4A9EE0
- *   - Text Color: #FFFFFF
+ * Based on HTML nav item with hover effects
  */
 @Composable
 private fun SideRailItemView(
@@ -104,48 +86,44 @@ private fun SideRailItemView(
             )
             .background(
                 when {
-                    isSelected -> WePrayTheme.colors.hoverEffect.copy(alpha = 0.15f)
+                    isSelected -> WePrayTheme.colors.primaryContainer
                     isHovered -> WePrayTheme.colors.hoverEffect
                     else -> Color.Transparent
                 }
             )
             .padding(
-                start = WePrayTheme.spacing.xl + WePrayTheme.spacing.sm,
-                end = WePrayTheme.spacing.xl + WePrayTheme.spacing.sm,
-                top = WePrayTheme.spacing.md + WePrayTheme.spacing.xs,
-                bottom = WePrayTheme.spacing.md + WePrayTheme.spacing.xs
+                horizontal = WePrayTheme.spacing.xl,
+                vertical = WePrayTheme.spacing.lg
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md + WePrayTheme.spacing.xs)
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
     ) {
-        // 아이콘
+        // Icon
         Icon(
             imageVector = item.icon,
             contentDescription = item.label,
-            modifier = Modifier.size(WePrayTheme.iconSize.navigation),
-            tint = if (isSelected || isHovered) 
-                WePrayTheme.colors.onSurface 
+            modifier = Modifier.size(WePrayTheme.iconSize.default),
+            tint = if (isSelected) 
+                WePrayTheme.colors.primary
+            else if (isHovered)
+                WePrayTheme.colors.textPrimary
             else 
-                WePrayTheme.colors.onSurfaceVariant
+                WePrayTheme.colors.textSecondary
         )
         
-        // 라벨
+        // Label
         Text(
             text = item.label,
-            style = WePrayTheme.typography.bodyMedium,
-            color = if (isSelected || isHovered) 
-                WePrayTheme.colors.onSurface 
+            style = if (isSelected) 
+                WePrayTheme.typography.bodyMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
             else 
-                WePrayTheme.colors.onSurfaceVariant
+                WePrayTheme.typography.bodyMedium,
+            color = if (isSelected) 
+                WePrayTheme.colors.primary
+            else if (isHovered)
+                WePrayTheme.colors.textPrimary
+            else 
+                WePrayTheme.colors.textSecondary
         )
     }
 }
-
-/**
- * Side Rail Item Data Class
- */
-data class SideRailItem(
-    val id: String,
-    val label: String,
-    val icon: ImageVector
-)

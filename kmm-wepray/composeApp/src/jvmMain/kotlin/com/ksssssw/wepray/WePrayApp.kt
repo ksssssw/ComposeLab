@@ -16,6 +16,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.ksssssw.wepray.domain.model.DeviceStatus
 import com.ksssssw.wepray.ui.components.DeviceInfo
+import com.ksssssw.wepray.ui.components.IconButtonSize
 import com.ksssssw.wepray.ui.components.WePrayDropdown
 import com.ksssssw.wepray.ui.components.WePrayIconButton
 import com.ksssssw.wepray.ui.components.WePrayTopBar
@@ -79,9 +80,8 @@ fun WePrayApp(
                         WePrayIconButton(
                             icon = Icons.Outlined.Refresh,
                             contentDescription = "디바이스 새로고침",
-                            onClick = {
-                                appViewModel.refreshDevices()
-                            }
+                            size = IconButtonSize.Large,
+                            onClick = { appViewModel.refreshDevices() }
                         )
                     }
                 )

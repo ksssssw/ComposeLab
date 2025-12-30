@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,31 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.Background
-import com.ksssssw.wepray.ui.theme.tokens.BorderColor
-import com.ksssssw.wepray.ui.theme.tokens.TextDisabled
 
 /**
  * WePray Dropdown/Select
- * 
- * 디자인 가이드 스펙:
- * - Background: rgba(10, 10, 10, 0.8)
- * - Border: 2px solid rgba(255, 255, 255, 0.2)
- * - Border (Focus): 2px solid #4A9EE0
- * - Padding: 15px 20px
- * - Border Radius: 8px
- * - Text Color: #FFFFFF
- * - Font Size: 1rem (16px)
- * - Icon: expand_more (24px)
- * 
- * States:
- * - Default: Border rgba(255, 255, 255, 0.2)
- * - Focus: Border #4A9EE0, Glow 0 0 15px rgba(74, 158, 224, 0.3)
- * - Error: Border #FF3D00
- * - Success: Border #00E676
- * - Disabled: Opacity 0.5, cursor not-allowed
+ * Based on HTML design with updated theme tokens
  */
 @Composable
 fun <T> WePrayDropdown(
@@ -71,11 +54,11 @@ fun <T> WePrayDropdown(
     var isFocused by remember { mutableStateOf(false) }
     
     val borderColor = when {
-        !enabled -> BorderColor.copy(alpha = 0.2f)
+        !enabled -> WePrayTheme.colors.border.copy(alpha = 0.5f)
         isError -> WePrayTheme.colors.error
         isSuccess -> WePrayTheme.colors.success
         isFocused || expanded -> WePrayTheme.colors.primary
-        else -> BorderColor.copy(alpha = 0.2f)
+        else -> WePrayTheme.colors.border
     }
     
     Box(
@@ -86,24 +69,20 @@ fun <T> WePrayDropdown(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation = if (isFocused || expanded) WePrayTheme.elevation.md else WePrayTheme.elevation.none,
-                    shape = WePrayTheme.shapes.input,
-                    spotColor = WePrayTheme.colors.primary.copy(alpha = 0.3f)
+                    elevation = if (isFocused || expanded) WePrayTheme.elevation.sm else 0.dp,
+                    shape = WePrayTheme.shapes.input
                 )
                 .clip(WePrayTheme.shapes.input)
-                .background(Background.copy(alpha = 0.8f))
+                .background(WePrayTheme.colors.surface)
                 .border(
-                    width = 2.dp,
+                    width = 1.dp,
                     color = borderColor,
                     shape = WePrayTheme.shapes.input
                 )
                 .clickable(enabled = enabled) {
                     expanded = !expanded
                 }
-                .padding(
-                    horizontal = WePrayTheme.spacing.inputPaddingHorizontal,
-                    vertical = WePrayTheme.spacing.inputPaddingVertical
-                )
+                .padding(WePrayTheme.spacing.inputPadding)
                 .onFocusChanged { focusState ->
                     isFocused = focusState.isFocused
                 },
@@ -112,11 +91,11 @@ fun <T> WePrayDropdown(
         ) {
             Text(
                 text = value?.let { itemLabel(it) } ?: placeholder,
-                style = WePrayTheme.typography.bodySmall,
+                style = WePrayTheme.typography.bodyMedium,
                 color = if (value != null) {
-                    if (enabled) WePrayTheme.colors.onBackground else WePrayTheme.colors.onBackground.copy(alpha = 0.5f)
+                    if (enabled) WePrayTheme.colors.textPrimary else WePrayTheme.colors.textDisabled
                 } else {
-                    TextDisabled
+                    WePrayTheme.colors.textSecondary
                 }
             )
             
@@ -124,7 +103,7 @@ fun <T> WePrayDropdown(
                 imageVector = Icons.Filled.ArrowDropDown,
                 contentDescription = "Dropdown",
                 modifier = Modifier.size(WePrayTheme.iconSize.default),
-                tint = if (enabled) WePrayTheme.colors.onSurfaceVariant else WePrayTheme.colors.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = if (enabled) WePrayTheme.colors.textSecondary else WePrayTheme.colors.textDisabled
             )
         }
         
@@ -133,16 +112,16 @@ fun <T> WePrayDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             shape = WePrayTheme.shapes.input,
-            containerColor = WePrayTheme.colors.surface,
-            border = BorderStroke(1.dp, BorderColor),
+            containerColor = WePrayTheme.colors.surfaceVariant,
+            border = BorderStroke(1.dp, WePrayTheme.colors.border)
         ) {
             items.forEach { item ->
                 DropdownMenuItem(
                     text = {
                         Text(
                             text = itemLabel(item),
-                            style = WePrayTheme.typography.bodySmall,
-                            color = WePrayTheme.colors.onSurface
+                            style = WePrayTheme.typography.bodyMedium,
+                            color = WePrayTheme.colors.textPrimary
                         )
                     },
                     onClick = {
@@ -151,10 +130,10 @@ fun <T> WePrayDropdown(
                     },
                     modifier = Modifier
                         .background(
-                            if (value == item) 
-                                WePrayTheme.colors.hoverEffect 
-                            else 
-                                androidx.compose.ui.graphics.Color.Transparent
+                            if (value == item)
+                                WePrayTheme.colors.primaryContainer
+                            else
+                                Color.Transparent
                         )
                 )
             }
@@ -168,10 +147,10 @@ private fun DropdownPreview() {
     WePrayTheme {
         Column(
             modifier = Modifier
-                .width(600.dp)
+                .width(700.dp)
                 .background(WePrayTheme.colors.background)
-                .padding(WePrayTheme.spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+                .padding(WePrayTheme.spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl)
         ) {
             Text(
                 text = "Dropdown States",
@@ -184,12 +163,12 @@ private fun DropdownPreview() {
             // Default
             var selectedCategory1 by remember { mutableStateOf<String?>(null) }
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
             ) {
                 Text(
                     text = "Default",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.onSurfaceVariant
+                    style = WePrayTheme.typography.headlineMedium,
+                    color = WePrayTheme.colors.onBackground
                 )
                 WePrayDropdown(
                     value = selectedCategory1,
@@ -202,12 +181,12 @@ private fun DropdownPreview() {
             // With Selection
             var selectedCategory2 by remember { mutableStateOf<String?>("홈 화면") }
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
             ) {
                 Text(
                     text = "Selected",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.onSurfaceVariant
+                    style = WePrayTheme.typography.headlineMedium,
+                    color = WePrayTheme.colors.onBackground
                 )
                 WePrayDropdown(
                     value = selectedCategory2,
@@ -219,11 +198,11 @@ private fun DropdownPreview() {
             // Error
             var selectedCategory3 by remember { mutableStateOf<String?>(null) }
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
             ) {
                 Text(
                     text = "Error State",
-                    style = WePrayTheme.typography.labelLarge,
+                    style = WePrayTheme.typography.headlineMedium,
                     color = WePrayTheme.colors.error
                 )
                 WePrayDropdown(
@@ -238,11 +217,11 @@ private fun DropdownPreview() {
             // Success
             var selectedCategory4 by remember { mutableStateOf<String?>("상세 화면") }
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
             ) {
                 Text(
                     text = "Success State",
-                    style = WePrayTheme.typography.labelLarge,
+                    style = WePrayTheme.typography.headlineMedium,
                     color = WePrayTheme.colors.success
                 )
                 WePrayDropdown(
@@ -255,12 +234,12 @@ private fun DropdownPreview() {
             
             // Disabled
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
             ) {
                 Text(
                     text = "Disabled",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.onSurfaceVariant
+                    style = WePrayTheme.typography.headlineMedium,
+                    color = WePrayTheme.colors.onBackground
                 )
                 WePrayDropdown(
                     value = "설정 화면",

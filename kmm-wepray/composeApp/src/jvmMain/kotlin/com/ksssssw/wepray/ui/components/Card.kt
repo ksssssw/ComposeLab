@@ -2,10 +2,10 @@ package com.ksssssw.wepray.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,9 +15,12 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Android
-import androidx.compose.material.icons.outlined.InstallMobile
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Smartphone
+import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -25,26 +28,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.BorderColor
-import com.ksssssw.wepray.ui.theme.tokens.WePrayGradients
 
 /**
  * WePray Basic Card
- *
- * 디자인 가이드 스펙:
- * - Background: rgba(26, 26, 26, 0.8)
- * - Border: 1px solid rgba(255, 255, 255, 0.1)
- * - Border Radius: 12px
- * - Padding: 25px
- * - Shadow (Hover): 0 8px 25px rgba(74, 158, 224, 0.2)
- * - Transform: translateY(-3px) on hover
+ * Based on HTML design: rounded-xl with border and shadow
  */
 @Composable
-fun WePrayBasicCard(
+fun WePrayCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
@@ -55,15 +50,14 @@ fun WePrayBasicCard(
     Column(
         modifier = modifier
             .shadow(
-                elevation = if (isHovered) WePrayTheme.elevation.lg else WePrayTheme.elevation.none,
-                shape = WePrayTheme.shapes.card,
-                spotColor = WePrayTheme.colors.primary.copy(alpha = 0.2f)
+                elevation = if (isHovered && onClick != null) WePrayTheme.elevation.card else 0.dp,
+                shape = WePrayTheme.shapes.card
             )
             .clip(WePrayTheme.shapes.card)
-            .background(WePrayTheme.colors.cardBackground)
+            .background(WePrayTheme.colors.surfaceVariant)
             .border(
                 width = 1.dp,
-                color = BorderColor,
+                color = WePrayTheme.colors.border,
                 shape = WePrayTheme.shapes.card
             )
             .then(
@@ -84,19 +78,144 @@ fun WePrayBasicCard(
 }
 
 /**
+ * WePray APK File Card
+ * Based on HTML list item design
+ */
+@Composable
+fun WePrayApkCard(
+    fileName: String,
+    version: String? = null,
+    modifiedTime: String,
+    modifier: Modifier = Modifier,
+    isInstalling: Boolean = false,
+    isInstalled: Boolean = false,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    onCardClick: () -> Unit = {},
+    onInstallClick: () -> Unit = {},
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    
+    val iconColor = when {
+        isError -> WePrayTheme.colors.error
+        isInstalling -> WePrayTheme.colors.primary
+        isInstalled -> WePrayTheme.colors.success
+        else -> WePrayTheme.colors.accentEmerald
+    }
+    
+    val icon = when {
+        isError -> Icons.Outlined.Warning
+        isInstalling -> Icons.Outlined.Sync
+        isInstalled -> Icons.Outlined.CheckCircle
+        else -> Icons.Outlined.Android
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(WePrayTheme.shapes.default)
+            .background(
+                if (isHovered) 
+                    WePrayTheme.colors.surfaceElevated
+                else 
+                    Color.Transparent
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onCardClick
+            )
+            .padding(
+                horizontal = WePrayTheme.spacing.listItemPaddingHorizontal,
+                vertical = WePrayTheme.spacing.listItemPadding
+            ),
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Icon
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(WePrayTheme.shapes.default)
+                .background(iconColor.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(WePrayTheme.iconSize.default),
+                tint = iconColor
+            )
+        }
+        
+        // File info
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = fileName,
+                    style = WePrayTheme.typography.bodyMedium,
+                    color = WePrayTheme.colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                
+                if (version != null) {
+                    WePrayBadge(
+                        text = version,
+                        variant = BadgeVariant.Neutral
+                    )
+                }
+            }
+            
+            Text(
+                text = when {
+                    isError && errorMessage != null -> errorMessage
+                    isInstalling -> "Installing..."
+                    isInstalled -> "Installed successfully"
+                    else -> "Modified: $modifiedTime"
+                },
+                style = WePrayTheme.typography.bodySmall,
+                color = when {
+                    isError -> WePrayTheme.colors.error
+                    isInstalling -> WePrayTheme.colors.primary
+                    isInstalled -> WePrayTheme.colors.success
+                    else -> WePrayTheme.colors.textSecondary
+                }
+            )
+        }
+        
+        // Actions
+        AnimatedVisibility(
+            visible = isHovered && !isInstalling,
+            enter = fadeIn(animationSpec = tween(WePrayTheme.animation.DEFAULT)) +
+                    expandVertically(animationSpec = tween(WePrayTheme.animation.DEFAULT)),
+            exit = fadeOut(animationSpec = tween(WePrayTheme.animation.FAST)) +
+                    shrinkVertically(animationSpec = tween(WePrayTheme.animation.FAST))
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+            ) {
+                WePrayPrimaryButton(
+                    text = "Install",
+                    onClick = onInstallClick,
+                    size = ButtonSize.Small
+                )
+            }
+        }
+    }
+}
+
+/**
  * WePray Device Card
- *
- * 디자인 가이드 스펙:
- * - Background: rgba(26, 26, 26, 0.8)
- * - Border: 2px solid rgba(255, 255, 255, 0.1)
- * - Border (Hover): 2px solid #4A9EE0
- * - Border (Selected): 2px solid #4A9EE0
- * - Background (Selected): rgba(74, 158, 224, 0.1)
- * - Border Radius: 12px
- * - Padding: 20px
- * - Display: Flex with gap 20px
- *
- * Structure: [Icon 50x50] [Device Info Flex-1] [Status Badge Auto]
+ * Based on HTML device card design
  */
 @Composable
 fun WePrayDeviceCard(
@@ -106,13 +225,13 @@ fun WePrayDeviceCard(
     androidVersion: String,
     apiLevel: String,
     resolution: String,
+    modifier: Modifier = Modifier,
     isSelected: Boolean = false,
     isConnected: Boolean = true,
     icon: ImageVector = Icons.Outlined.Smartphone,
-    modifier: Modifier = Modifier,
     onCardClick: () -> Unit = {},
     onMirroringClick: () -> Unit = {},
-    onScreenshotClick: () -> Unit = {},
+    onScreenshotClick: () -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
@@ -120,19 +239,20 @@ fun WePrayDeviceCard(
     Box(
         modifier = modifier
             .size(width = 360.dp, height = 320.dp)
+            .shadow(
+                elevation = if (isHovered || isSelected) WePrayTheme.elevation.card else 0.dp,
+                shape = WePrayTheme.shapes.card
+            )
             .clip(WePrayTheme.shapes.card)
             .background(
-                if (isSelected)
-                    WePrayTheme.colors.hoverEffect
-                else
-                    WePrayTheme.colors.cardBackground
+                WePrayTheme.colors.surfaceVariant
             )
             .border(
-                width = 2.dp,
+                width = 1.dp,
                 color = when {
                     isSelected -> WePrayTheme.colors.primary
                     isHovered -> WePrayTheme.colors.primary
-                    else -> BorderColor
+                    else -> WePrayTheme.colors.border
                 },
                 shape = WePrayTheme.shapes.card
             )
@@ -140,76 +260,71 @@ fun WePrayDeviceCard(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onCardClick
-            ),
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(WePrayTheme.spacing.xl),
+                .padding(WePrayTheme.spacing.cardPaddingLarge),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
+            // Icon
             Box(
                 modifier = Modifier
                     .size(60.dp)
                     .clip(WePrayTheme.shapes.card)
-                    .background(
-                        WePrayGradients.Rainbow
-                    ),
+                    .background(WePrayTheme.gradients.Primary),
                 contentAlignment = Alignment.Center
             ) {
-                // 디바이스 아이콘 (50x50)
                 Icon(
                     imageVector = icon,
                     contentDescription = "Device Icon",
                     modifier = Modifier.size(32.dp),
-                    tint = WePrayTheme.colors.onSurface
+                    tint = androidx.compose.ui.graphics.Color.White
                 )
             }
 
-            // 디바이스 정보 (Flex-1)
+            // Device info
             Column(
-                modifier = modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
             ) {
-                // Model Name (Title)
                 Text(
                     text = deviceModel,
-                    style = WePrayTheme.typography.bodyLarge,
-                    color = WePrayTheme.colors.onSurface,
+                    style = WePrayTheme.typography.headlineMedium,
+                    color = WePrayTheme.colors.textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // 2-Column Grid for Device Details
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
                 ) {
-                    // Left Column
+                    // Left column
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
                     ) {
-                        InfoItem(
+                        DeviceInfoItem(
                             label = "제조사",
                             value = deviceManufacturer
                         )
-                        InfoItem(
+                        DeviceInfoItem(
                             label = "Serial",
                             value = serialNumber
                         )
                     }
 
-                    // Right Column
+                    // Right column
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
                     ) {
-                        InfoItem(
+                        DeviceInfoItem(
                             label = "Android",
-                            value = "$androidVersion (API ${apiLevel})"
+                            value = "$androidVersion (API $apiLevel)"
                         )
-                        InfoItem(
+                        DeviceInfoItem(
                             label = "해상도",
                             value = resolution
                         )
@@ -217,6 +332,7 @@ fun WePrayDeviceCard(
                 }
             }
 
+            // Actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
@@ -242,148 +358,26 @@ fun WePrayDeviceCard(
 }
 
 @Composable
-private fun InfoItem(
+private fun DeviceInfoItem(
     label: String,
     value: String,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
     ) {
         Text(
             text = label,
-            style = WePrayTheme.typography.labelMedium,
-            color = WePrayTheme.colors.onSurfaceVariant
+            style = WePrayTheme.typography.labelSmall,
+            color = WePrayTheme.colors.textTertiary
         )
 
         Text(
             text = value,
-            style = WePrayTheme.typography.labelLarge,
-            color = WePrayTheme.colors.onSurface,
+            style = WePrayTheme.typography.labelMedium,
+            color = WePrayTheme.colors.textPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-    }
-}
-
-@Composable
-fun WePrayApkFileCard(
-    fileName: String,
-    modifiedDate: String, // "2024-12-29 14:30" 형식
-    isSelected: Boolean = false,
-    modifier: Modifier = Modifier,
-    onCardClick: () -> Unit = {},
-    onInstallClick: () -> Unit = {},
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .clip(WePrayTheme.shapes.card)
-            .background(
-                if (isSelected)
-                    WePrayTheme.colors.hoverEffect
-                else
-                    WePrayTheme.colors.cardBackground
-            )
-            .border(
-                width = 2.dp,
-                color = when {
-                    isSelected -> WePrayTheme.colors.primary
-                    isHovered -> WePrayTheme.colors.primary
-                    else -> BorderColor
-                },
-                shape = WePrayTheme.shapes.card
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onCardClick
-            ),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(WePrayTheme.spacing.xl),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Left: APK 아이콘과 파일 정보
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // APK 아이콘
-                Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(WePrayTheme.shapes.card)
-                        .background(
-                            WePrayGradients.Primary
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Android, // 또는 Package
-                        contentDescription = "APK File",
-                        modifier = Modifier.size(28.dp),
-                        tint = WePrayTheme.colors.onSurface
-                    )
-                }
-
-                // 파일 정보
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-                ) {
-                    // 파일명
-                    Text(
-                        text = fileName,
-                        style = WePrayTheme.typography.bodyLarge,
-                        color = WePrayTheme.colors.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    // 수정일
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Schedule, // 시계 아이콘
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = WePrayTheme.colors.onSurfaceVariant
-                        )
-                        Text(
-                            text = modifiedDate,
-                            style = WePrayTheme.typography.labelMedium,
-                            color = WePrayTheme.colors.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Right: Install 버튼 (선택 시에만 표시)
-            AnimatedVisibility(
-                visible = isSelected,
-                enter = fadeIn(animationSpec = tween(300)) +
-                        expandHorizontally(animationSpec = tween(300)),
-                exit = fadeOut(animationSpec = tween(200)) +
-                        shrinkHorizontally(animationSpec = tween(200))
-            ) {
-                WePrayPrimaryButton(
-                    modifier = Modifier.width(120.dp),
-                    text = "Install",
-                    onClick = onInstallClick,
-                    size = ButtonSize.Default,
-                )
-            }
-        }
     }
 }
 
@@ -393,77 +387,129 @@ private fun CardPreview() {
     WePrayTheme {
         Column(
             modifier = Modifier
-                .width(600.dp)
+                .width(900.dp)
                 .background(WePrayTheme.colors.background)
-                .padding(WePrayTheme.spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
+                .padding(WePrayTheme.spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl)
         ) {
             // Basic Card
-            WePrayBasicCard(
-                onClick = { println("Card clicked") }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
             ) {
                 Text(
                     text = "Basic Card",
                     style = WePrayTheme.typography.headlineLarge,
-                    color = WePrayTheme.colors.onSurface
+                    color = WePrayTheme.colors.onBackground
                 )
+                
+                WePrayCard(
+                    onClick = { println("Card clicked") }
+                ) {
+                    Text(
+                        text = "Card Title",
+                        style = WePrayTheme.typography.headlineMedium,
+                        color = WePrayTheme.colors.textPrimary
+                    )
 
-                Spacer(modifier = Modifier.height(WePrayTheme.spacing.md))
+                    Spacer(modifier = Modifier.height(WePrayTheme.spacing.md))
 
-                Text(
-                    text = "카드 내용이 여기에 표시됩니다. 호버 시 그림자 효과가 나타납니다.",
-                    style = WePrayTheme.typography.bodyMedium,
-                    color = WePrayTheme.colors.onSurfaceVariant
-                )
+                    Text(
+                        text = "Card content goes here. This is a basic card with hover effects.",
+                        style = WePrayTheme.typography.bodyMedium,
+                        color = WePrayTheme.colors.textSecondary
+                    )
+                }
             }
-
-            WePrayApkFileCard(
-                fileName = "MyApp_v1.0.0_release.apk",
-                modifiedDate = "2024-12-29 14:30",
-                isSelected = true,
-                onCardClick = { /* 카드 선택 로직 */ },
-                onInstallClick = { /* APK 설치 로직 */ }
-            )
-
-            // Device Card - Connected
-            WePrayDeviceCard(
-                deviceModel = "SM-S918N",
-                deviceManufacturer = "Samsung",
-                serialNumber = "1234567890",
-                apiLevel = "33",
-                resolution = "1080 x 2408",
-                androidVersion = "Android 14 (API 34)",
-                isSelected = false,
-                icon = Icons.Outlined.Smartphone,
-                onCardClick = { println("Device selected") },
-                onMirroringClick = { println("Mirroring clicked") },
-                onScreenshotClick = { println("Screenshot clicked") }
-            )
-
-            // Device Card - Selected
-            WePrayDeviceCard(
-                deviceModel = "SM-S918N",
-                deviceManufacturer = "Samsung",
-                serialNumber = "1234567890",
-                apiLevel = "33",
-                resolution = "1080 x 2408",
-                androidVersion = "Android 14 (API 34)",
-                isSelected = true,
-                icon = Icons.Outlined.Android,
-                onCardClick = { println("Device selected") }
-            )
-
-            // Device Card - Disconnected
-            WePrayDeviceCard(
-                deviceModel = "SM-S918N",
-                deviceManufacturer = "Samsung",
-                serialNumber = "1234567890",
-                apiLevel = "33",
-                resolution = "1080 x 2408",
-                androidVersion = "Android 14 (API 34)",
-                isSelected = false,
-                onCardClick = { println("Device selected") }
-            )
+            
+            // APK Cards
+            Column(
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+            ) {
+                Text(
+                    text = "APK File Cards",
+                    style = WePrayTheme.typography.headlineLarge,
+                    color = WePrayTheme.colors.onBackground
+                )
+                
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(WePrayTheme.shapes.card)
+                        .background(WePrayTheme.colors.surfaceVariant)
+                        .border(1.dp, WePrayTheme.colors.border, WePrayTheme.shapes.card),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    WePrayApkCard(
+                        fileName = "com.instagram.android.apk",
+                        version = "v294.0.0",
+                        modifiedTime = "2 mins ago",
+                        onInstallClick = { println("Install") }
+                    )
+                    
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WePrayTheme.colors.border))
+                    
+                    WePrayApkCard(
+                        fileName = "app-debug-unsigned.apk",
+                        version = "v1.0.4-beta",
+                        modifiedTime = "5 mins ago",
+                        isInstalling = true
+                    )
+                    
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WePrayTheme.colors.border))
+                    
+                    WePrayApkCard(
+                        fileName = "spotify-lite.apk",
+                        version = "v8.8.0",
+                        modifiedTime = "1 hour ago",
+                        isInstalled = true
+                    )
+                    
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WePrayTheme.colors.border))
+                    
+                    WePrayApkCard(
+                        fileName = "corrupt-build.apk",
+                        version = null,
+                        modifiedTime = "Yesterday",
+                        isError = true,
+                        errorMessage = "Parse error: Invalid manifest"
+                    )
+                }
+            }
+            
+            // Device Cards
+            Column(
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+            ) {
+                Text(
+                    text = "Device Cards",
+                    style = WePrayTheme.typography.headlineLarge,
+                    color = WePrayTheme.colors.onBackground
+                )
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
+                ) {
+                    WePrayDeviceCard(
+                        deviceModel = "SM-S918N",
+                        deviceManufacturer = "Samsung",
+                        serialNumber = "1234567890",
+                        androidVersion = "14",
+                        apiLevel = "34",
+                        resolution = "1080 x 2408",
+                        isSelected = true,
+                        icon = Icons.Outlined.Smartphone
+                    )
+                    
+                    WePrayDeviceCard(
+                        deviceModel = "Pixel 8 Pro",
+                        deviceManufacturer = "Google",
+                        serialNumber = "0987654321",
+                        androidVersion = "14",
+                        apiLevel = "34",
+                        resolution = "1344 x 2992"
+                    )
+                }
+            }
         }
     }
 }

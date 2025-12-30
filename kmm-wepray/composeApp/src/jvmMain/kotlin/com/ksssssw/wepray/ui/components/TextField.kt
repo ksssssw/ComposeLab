@@ -6,46 +6,35 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.Background
-import com.ksssssw.wepray.ui.theme.tokens.BorderColor
-import com.ksssssw.wepray.ui.theme.tokens.TextDisabled
 
 /**
  * WePray Text Input
- * 
- * 디자인 가이드 스펙:
- * - Background: rgba(10, 10, 10, 0.8)
- * - Border: 2px solid rgba(255, 255, 255, 0.2)
- * - Border (Focus): 2px solid #4A9EE0
- * - Padding: 15px 20px
- * - Border Radius: 8px
- * - Text Color: #FFFFFF
- * - Placeholder: #808080
- * - Font Size: 1rem (16px)
- * 
- * States:
- * - Default: Border rgba(255, 255, 255, 0.2)
- * - Focus: Border #4A9EE0, Glow 0 0 15px rgba(74, 158, 224, 0.3)
- * - Error: Border #FF3D00
- * - Success: Border #00E676
- * - Disabled: Opacity 0.5, cursor not-allowed
+ * Based on HTML design with icon support
  */
 @Composable
 fun WePrayTextField(
@@ -53,6 +42,7 @@ fun WePrayTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "",
+    leadingIcon: ImageVector? = null,
     enabled: Boolean = true,
     isError: Boolean = false,
     isSuccess: Boolean = false,
@@ -61,11 +51,16 @@ fun WePrayTextField(
     var isFocused by remember { mutableStateOf(false) }
     
     val borderColor = when {
-        !enabled -> BorderColor.copy(alpha = 0.2f)
+        !enabled -> WePrayTheme.colors.border.copy(alpha = 0.5f)
         isError -> WePrayTheme.colors.error
         isSuccess -> WePrayTheme.colors.success
         isFocused -> WePrayTheme.colors.primary
-        else -> BorderColor.copy(alpha = 0.2f)
+        else -> WePrayTheme.colors.border
+    }
+    
+    val backgroundColor = when {
+        !enabled -> WePrayTheme.colors.surfaceVariant.copy(alpha = 0.5f)
+        else -> WePrayTheme.colors.surface
     }
     
     BasicTextField(
@@ -74,20 +69,15 @@ fun WePrayTextField(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = if (isFocused) WePrayTheme.elevation.md else WePrayTheme.elevation.none,
-                shape = WePrayTheme.shapes.input,
-                spotColor = WePrayTheme.colors.primary.copy(alpha = 0.3f)
-            )
-            .clip(WePrayTheme.shapes.input)
-            .background(Background.copy(alpha = 0.8f))
-            .border(
-                width = 2.dp,
-                color = borderColor,
+                elevation = if (isFocused) WePrayTheme.elevation.sm else 0.dp,
                 shape = WePrayTheme.shapes.input
             )
-            .padding(
-                horizontal = WePrayTheme.spacing.inputPaddingHorizontal,
-                vertical = WePrayTheme.spacing.inputPaddingVertical
+            .clip(WePrayTheme.shapes.input)
+            .background(backgroundColor)
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = WePrayTheme.shapes.input
             )
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
@@ -95,22 +85,107 @@ fun WePrayTextField(
         enabled = enabled,
         singleLine = singleLine,
         textStyle = WePrayTheme.typography.bodyMedium.copy(
-            color = if (enabled) WePrayTheme.colors.onBackground else WePrayTheme.colors.onBackground.copy(alpha = 0.5f)
+            color = if (enabled) WePrayTheme.colors.textPrimary else WePrayTheme.colors.textDisabled
         ),
         cursorBrush = SolidColor(WePrayTheme.colors.primary),
         decorationBox = { innerTextField ->
-            Box {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = WePrayTheme.typography.bodyMedium,
-                        color = TextDisabled
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(WePrayTheme.spacing.inputPadding),
+                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Leading icon
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        modifier = Modifier.size(WePrayTheme.iconSize.default),
+                        tint = if (isFocused) {
+                            WePrayTheme.colors.primary
+                        } else {
+                            WePrayTheme.colors.textSecondary
+                        }
                     )
                 }
-                innerTextField()
+                
+                // Text field with placeholder
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = WePrayTheme.typography.bodyMedium,
+                            color = WePrayTheme.colors.textSecondary
+                        )
+                    }
+                    innerTextField()
+                }
             }
         }
     )
+}
+
+/**
+ * WePray TextField with Label
+ * For forms with field labels
+ */
+@Composable
+fun WePrayLabeledTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String = "",
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    leadingIcon: ImageVector? = null,
+    enabled: Boolean = true,
+    isError: Boolean = false,
+    isSuccess: Boolean = false,
+    helperText: String? = null
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+    ) {
+        // Label
+        if (label.isNotEmpty()) {
+            Text(
+                text = label,
+                style = WePrayTheme.typography.overline,
+                color = when {
+                    isError -> WePrayTheme.colors.error
+                    isSuccess -> WePrayTheme.colors.success
+                    else -> WePrayTheme.colors.textSecondary
+                }
+            )
+        }
+        
+        // Text field
+        WePrayTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            leadingIcon = leadingIcon,
+            enabled = enabled,
+            isError = isError,
+            isSuccess = isSuccess
+        )
+        
+        // Helper text
+        if (helperText != null) {
+            Text(
+                text = helperText,
+                style = WePrayTheme.typography.bodySmall,
+                color = when {
+                    isError -> WePrayTheme.colors.error
+                    isSuccess -> WePrayTheme.colors.success
+                    else -> WePrayTheme.colors.textTertiary
+                }
+            )
+        }
+    }
 }
 
 @Preview
@@ -119,10 +194,10 @@ private fun TextFieldPreview() {
     WePrayTheme {
         Column(
             modifier = Modifier
-                .width(600.dp)
+                .width(700.dp)
                 .background(WePrayTheme.colors.background)
-                .padding(WePrayTheme.spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+                .padding(WePrayTheme.spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl)
         ) {
             Text(
                 text = "Text Input States",
@@ -132,87 +207,61 @@ private fun TextFieldPreview() {
             
             // Default
             var defaultText by remember { mutableStateOf("") }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-            ) {
-                Text(
-                    text = "Default",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.onSurfaceVariant
-                )
-                WePrayTextField(
-                    value = defaultText,
-                    onValueChange = { defaultText = it },
-                    placeholder = "Enter text here..."
-                )
-            }
+            WePrayLabeledTextField(
+                value = defaultText,
+                onValueChange = { defaultText = it },
+                label = "Default",
+                placeholder = "Enter text here..."
+            )
             
-            // With Text
-            var filledText by remember { mutableStateOf("Hello WePray") }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-            ) {
-                Text(
-                    text = "Filled",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.onSurfaceVariant
-                )
-                WePrayTextField(
-                    value = filledText,
-                    onValueChange = { filledText = it }
-                )
-            }
+            // With Icon
+            var searchText by remember { mutableStateOf("") }
+            WePrayLabeledTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                label = "Search Input",
+                placeholder = "Filter APKs by name...",
+                leadingIcon = Icons.Outlined.Search
+            )
+            
+            // With Icon and Value
+            var pathText by remember { mutableStateOf("C:/Users/Developer/Downloads/APKs/Release_v2") }
+            WePrayLabeledTextField(
+                value = pathText,
+                onValueChange = { pathText = it },
+                label = "Local Source Directory",
+                placeholder = "Enter path...",
+                leadingIcon = Icons.Outlined.FolderOpen
+            )
             
             // Error
             var errorText by remember { mutableStateOf("") }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-            ) {
-                Text(
-                    text = "Error State",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.error
-                )
-                WePrayTextField(
-                    value = errorText,
-                    onValueChange = { errorText = it },
-                    placeholder = "Invalid input",
-                    isError = true
-                )
-            }
+            WePrayLabeledTextField(
+                value = errorText,
+                onValueChange = { errorText = it },
+                label = "Error State",
+                placeholder = "Invalid input",
+                isError = true,
+                helperText = "This field is required"
+            )
             
             // Success
             var successText by remember { mutableStateOf("Valid input") }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-            ) {
-                Text(
-                    text = "Success State",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.success
-                )
-                WePrayTextField(
-                    value = successText,
-                    onValueChange = { successText = it },
-                    isSuccess = true
-                )
-            }
+            WePrayLabeledTextField(
+                value = successText,
+                onValueChange = { successText = it },
+                label = "Success State",
+                isSuccess = true,
+                helperText = "Looks good!"
+            )
             
             // Disabled
-            Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-            ) {
-                Text(
-                    text = "Disabled",
-                    style = WePrayTheme.typography.labelLarge,
-                    color = WePrayTheme.colors.onSurfaceVariant
-                )
-                WePrayTextField(
-                    value = "Disabled field",
-                    onValueChange = {},
-                    enabled = false
-                )
-            }
+            WePrayLabeledTextField(
+                value = "Disabled field",
+                onValueChange = {},
+                label = "Disabled",
+                enabled = false
+            )
         }
     }
 }

@@ -1,32 +1,64 @@
 package com.ksssssw.wepray.ui.scene.installer
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Android
-import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.FolderOff
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.ksssssw.wepray.ui.components.WePrayApkFileCard
+import com.ksssssw.wepray.domain.model.Device
+import com.ksssssw.wepray.domain.model.DeviceStorageInfo
+import com.ksssssw.wepray.ui.components.ButtonSize
+import com.ksssssw.wepray.ui.components.IconButtonSize
+import com.ksssssw.wepray.ui.components.ProgressSegment
+import com.ksssssw.wepray.ui.components.WePrayApkCard
+import com.ksssssw.wepray.ui.components.WePrayCard
+import com.ksssssw.wepray.ui.components.WePrayDragDropZone
+import com.ksssssw.wepray.ui.components.WePrayDropdown
 import com.ksssssw.wepray.ui.components.WePrayIconButton
-import com.ksssssw.wepray.ui.components.WePrayTextField
+import com.ksssssw.wepray.ui.components.WePrayLabeledTextField
+import com.ksssssw.wepray.ui.components.WePrayMultiProgressBar
+import com.ksssssw.wepray.ui.components.WePraySearchBar
+import com.ksssssw.wepray.ui.components.WePraySecondaryButton
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.TextDisabled
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 
-@Serializable internal data object Installer: NavKey
+@Serializable
+internal data object Installer : NavKey
 
 internal fun EntryProviderScope<NavKey>.installerScene() {
     entry<Installer> {
@@ -36,319 +68,647 @@ internal fun EntryProviderScope<NavKey>.installerScene() {
 
 @Composable
 fun InstallerScene(
-    viewModel: InstallerViewModel = koinViewModel()
+    viewModel: InstallerViewModel = koinViewModel(),
 ) {
-    val selectedFolderPath by viewModel.selectedFolderPath.collectAsStateWithLifecycle()
-    val filterText by viewModel.filterText.collectAsStateWithLifecycle()
-    val filteredApkFiles by viewModel.filteredApkFiles.collectAsStateWithLifecycle()
-    val selectedApkFile by viewModel.selectedApkFile.collectAsStateWithLifecycle()
-    val selectedDevice by viewModel.selectedDevice.collectAsStateWithLifecycle()
-    val folderSelectionState by viewModel.folderSelectionState.collectAsStateWithLifecycle()
-    val installState by viewModel.installState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
-    // 폴더 선택 결과 처리
-    LaunchedEffect(folderSelectionState) {
-        when (folderSelectionState) {
-            is FolderSelectionState.Success -> {
-                println("✅ 폴더 선택됨: ${(folderSelectionState as FolderSelectionState.Success).path}")
-                viewModel.resetFolderSelectionState()
+    when (val state = uiState) {
+        is InstallerUiState.Loading -> {
+            LoadingState()
+        }
+        is InstallerUiState.Success -> {
+            // 폴더 선택 결과 처리
+            LaunchedEffect(state.folderSelectionState) {
+                when (state.folderSelectionState) {
+                    is FolderSelectionState.Success -> {
+                        println("✅ 폴더 선택됨: ${(state.folderSelectionState as FolderSelectionState.Success).path}")
+                        viewModel.resetFolderSelectionState()
+                    }
+                    is FolderSelectionState.Cancelled -> {
+                        println("ℹ️ 폴더 선택이 취소되었습니다")
+                        viewModel.resetFolderSelectionState()
+                    }
+                    is FolderSelectionState.Error -> {
+                        println("❌ 폴더 선택 실패: ${(state.folderSelectionState as FolderSelectionState.Error).message}")
+                        viewModel.resetFolderSelectionState()
+                    }
+                    else -> { /* Idle or Selecting */ }
+                }
             }
-            is FolderSelectionState.Cancelled -> {
-                println("ℹ️ 폴더 선택이 취소되었습니다")
-                viewModel.resetFolderSelectionState()
-            }
-            is FolderSelectionState.Error -> {
-                println("❌ 폴더 선택 실패: ${(folderSelectionState as FolderSelectionState.Error).message}")
-                viewModel.resetFolderSelectionState()
-            }
-            else -> { /* Idle or Selecting */ }
+            
+            InstallerContent(
+                uiState = state,
+                onFilterTextChange = viewModel::updateFilterText,
+                onSortOptionChange = { option ->
+                    viewModel.updateSortOption(
+                        when (option) {
+                            "Name" -> SortOption.NAME
+                            "Modified" -> SortOption.MODIFIED_DATE
+                            else -> SortOption.MODIFIED_DATE
+                        }
+                    )
+                },
+                onSelectFolder = viewModel::selectApkFolder,
+                onRefreshList = viewModel::refreshApkList,
+                onApkCardClick = viewModel::selectApkFile,
+                onInstallClick = viewModel::installApk,
+                onApkDrop = viewModel::installApkByPath
+            )
         }
     }
-    
-    // 설치 상태 처리
-    LaunchedEffect(installState) {
-        when (installState) {
-            is InstallState.Success -> {
-                println("✅ APK 설치 성공: ${(installState as InstallState.Success).fileName}")
-                viewModel.resetInstallState()
-            }
-            is InstallState.Error -> {
-                println("❌ APK 설치 실패: ${(installState as InstallState.Error).message}")
-                viewModel.resetInstallState()
-            }
-            else -> { /* Idle or Installing */ }
-        }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            color = WePrayTheme.colors.primary
+        )
     }
-    
-    InstallerContent(
-        modifier = Modifier,
-        selectedFolderPath = selectedFolderPath,
-        filterText = filterText,
-        filteredApkFiles = filteredApkFiles,
-        selectedApkFile = selectedApkFile,
-        selectedDevice = selectedDevice,
-        installState = installState,
-        onFilterTextChange = viewModel::updateFilterText,
-        onSelectFolder = viewModel::selectApkFolder,
-        onApkCardClick = viewModel::selectApkFile,
-        onInstallClick = viewModel::installSelectedApk,
-        onApkDrop = viewModel::installApkByPath
-    )
 }
 
 @Composable
 private fun InstallerContent(
-    modifier: Modifier = Modifier,
-    selectedFolderPath: String?,
-    filterText: String,
-    filteredApkFiles: List<ApkFileInfo>,
-    selectedApkFile: ApkFileInfo?,
-    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
-    installState: InstallState,
+    uiState: InstallerUiState.Success,
     onFilterTextChange: (String) -> Unit,
+    onSortOptionChange: (String) -> Unit,
     onSelectFolder: () -> Unit,
+    onRefreshList: () -> Unit,
     onApkCardClick: (ApkFileInfo) -> Unit,
-    onInstallClick: () -> Unit,
-    onApkDrop: (String) -> Unit
+    onInstallClick: (ApkFileInfo) -> Unit,
+    onApkDrop: (String) -> Unit,
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(vertical = WePrayTheme.spacing.lg)
+            .padding(vertical = WePrayTheme.spacing.xl)
     ) {
-        // 상단 검색 및 폴더 선택 영역
+        // 메인 컨텐츠: 좌우 레이아웃
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = WePrayTheme.spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sectionGap)
         ) {
-            // 검색 텍스트 필드
-            WePrayTextField(
-                modifier = Modifier.weight(1f),
-                value = filterText,
-                onValueChange = onFilterTextChange,
-                placeholder = "APK 파일명 검색...",
-//                enabled = selectedFolderPath != null && filteredApkFiles.isNotEmpty()
+            // 왼쪽: 폴더 & 검색 & 파일 리스트 (8/12)
+            Column(
+                modifier = Modifier
+                    .weight(0.67f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sectionGap)
+            ) {
+                // 로컬 소스 디렉토리
+                LocalSourceDirectorySection(
+                    selectedFolderPath = uiState.folderPath,
+                    onSelectFolder = onSelectFolder
+                )
+
+                // 검색 & 필터
+                SearchAndFiltersSection(
+                    filterText = uiState.filterText,
+                    sortOption = when (uiState.sortOption) {
+                        SortOption.NAME -> "Name"
+                        SortOption.MODIFIED_DATE -> "Modified"
+                    },
+                    onFilterTextChange = onFilterTextChange,
+                    onSortOptionChange = onSortOptionChange,
+                    onRefreshList = onRefreshList
+                )
+
+                // 파일 리스트
+                ApkFileListSection(
+                    apkFiles = uiState.apkFiles,
+                    selectedApkFile = uiState.selectedApkFile,
+                    selectedDevice = uiState.selectedDevice,
+                    installStates = uiState.installStates,
+                    filterText = uiState.filterText,
+                    sortOption = uiState.sortOption,
+                    onApkCardClick = onApkCardClick,
+                    onInstallClick = onInstallClick,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // 오른쪽: 통계 & 정보 (4/12)
+            Column(
+                modifier = Modifier
+                    .weight(0.33f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sectionGap)
+            ) {
+                // 통계 카드
+                StatsCardsSection(
+                    totalFilesFound = uiState.totalFilesCount,
+                )
+
+                // 디바이스 스토리지 카드
+                DeviceStorageCard(
+                    selectedDevice = uiState.selectedDevice,
+                    deviceStorageInfo = uiState.deviceStorageInfo
+                )
+
+                // Drag & Drop Zone
+                DragDropZoneSection(
+                    onApkDrop = onApkDrop,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// 로컬 소스 디렉토리 섹션
+// ============================================
+
+@Composable
+private fun LocalSourceDirectorySection(
+    selectedFolderPath: String?,
+    onSelectFolder: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    WePrayCard(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+        ) {
+            Text(
+                text = "LOCAL SOURCE DIRECTORY",
+                style = WePrayTheme.typography.overline,
+                color = WePrayTheme.colors.textSecondary
             )
-            
-            // 현재 선택된 폴더 경로 표시
-            if (selectedFolderPath != null) {
-                Text(
-                    text = selectedFolderPath,
-                    style = WePrayTheme.typography.bodyMedium,
-                    color = WePrayTheme.colors.onSurfaceVariant,
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WePrayLabeledTextField(
+                    value = selectedFolderPath ?: "",
+                    onValueChange = { /* 직접 입력은 미지원 */ },
+                    placeholder = "Enter path...",
+                    leadingIcon = Icons.Outlined.FolderOpen,
                     modifier = Modifier.weight(1f),
-                    maxLines = 1
+                    label = "",
+                    enabled = false
                 )
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
-            
-            // 폴더 선택 버튼
-            WePrayIconButton(
-                icon = if (selectedFolderPath != null) Icons.Outlined.FolderOpen else Icons.Outlined.Folder,
-                contentDescription = "폴더 선택",
-                onClick = onSelectFolder
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(WePrayTheme.spacing.lg))
-        
-        // 컨텐츠 영역 (상태에 따라 다르게 표시)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = WePrayTheme.spacing.lg)
-        ) {
-            when {
-                // 설치 중
-                installState is InstallState.Installing -> {
-                    InstallingState(fileName = installState.fileName)
-                }
-                
-                // 폴더를 선택하지 않았을 경우
-                selectedFolderPath == null -> {
-                    EmptyFolderState(
-                        selectedDevice = selectedDevice,
-                        onSelectFolder = onSelectFolder
-                    )
-                }
-                
-                // 폴더를 선택했지만 APK 파일이 없을 경우
-                filteredApkFiles.isEmpty() -> {
-                    NoApkFilesState(
-                        selectedDevice = selectedDevice,
-                        folderPath = selectedFolderPath,
-                        onSelectFolder = onSelectFolder
-                    )
-                }
-                
-                // APK 파일 목록 표시
-                else -> {
-                    ApkFileList(
-                        apkFiles = filteredApkFiles,
-                        selectedApkFile = selectedApkFile,
-                        onApkCardClick = onApkCardClick,
-                        onInstallClick = onInstallClick
-                    )
-                }
+
+                WePraySecondaryButton(
+                    text = "Browse",
+                    onClick = onSelectFolder,
+                    size = ButtonSize.Large,
+                )
             }
         }
     }
 }
 
-@Composable
-private fun InstallingState(fileName: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            CircularProgressIndicator(
-                color = WePrayTheme.colors.primary
-            )
-            Text(
-                text = "APK 설치 중...",
-                style = WePrayTheme.typography.headlineLarge,
-                color = WePrayTheme.colors.primary
-            )
-            Text(
-                text = fileName,
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
+// ============================================
+// 검색 & 필터 섹션
+// ============================================
 
 @Composable
-private fun EmptyFolderState(
-    isDragging: Boolean = false,
-    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
-    onSelectFolder: () -> Unit
+private fun SearchAndFiltersSection(
+    filterText: String,
+    sortOption: String,
+    onFilterTextChange: (String) -> Unit,
+    onSortOptionChange: (String) -> Unit,
+    onRefreshList: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(WePrayTheme.spacing.xl)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Folder,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextDisabled
-            )
-            
-            Text(
-                text = "폴더를 선택해주세요",
-                style = WePrayTheme.typography.headlineLarge,
-                color = WePrayTheme.colors.onSurface
-            )
-            
-            Text(
-                text = "APK 파일이 있는 폴더를 선택하세요",
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            
-            if (selectedDevice == null) {
-                Spacer(modifier = Modifier.height(WePrayTheme.spacing.sm))
-                Text(
-                    text = "⚠️ 먼저 Devices 탭에서 디바이스를 선택해주세요",
-                    style = WePrayTheme.typography.bodyMedium,
-                    color = WePrayTheme.colors.error,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        // 검색 바
+        WePraySearchBar(
+            value = filterText,
+            onValueChange = onFilterTextChange,
+            placeholder = "Filter APKs by name...",
+            modifier = Modifier.weight(1f)
+        )
+
+        // 정렬 드롭다운
+        WePrayDropdown(
+            value = sortOption,
+            onValueChange = onSortOptionChange,
+            items = listOf("Name", "Modified"),
+            placeholder = "Sort",
+            modifier = Modifier.width(140.dp)
+        )
+
+        // 새로고침 버튼
+        WePrayIconButton(
+            icon = Icons.Outlined.Refresh,
+            contentDescription = "Refresh List",
+            size = IconButtonSize.Large,
+            onClick = onRefreshList
+        )
     }
 }
 
-@Composable
-private fun NoApkFilesState(
-    isDragging: Boolean = false,
-    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
-    folderPath: String,
-    onSelectFolder: () -> Unit
-) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(WePrayTheme.spacing.xl)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Android,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextDisabled
-            )
-            
-            Text(
-                text = "APK 파일이 없습니다",
-                style = WePrayTheme.typography.headlineLarge,
-                color = WePrayTheme.colors.onSurface
-            )
-            
-            Text(
-                text = "이 폴더에는 APK 파일이 없습니다\n다른 폴더를 선택해주세요",
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            
-            Text(
-                text = "현재 폴더: $folderPath",
-                style = WePrayTheme.typography.bodySmall,
-                color = TextDisabled,
-                textAlign = TextAlign.Center
-            )
-            
-            if (selectedDevice == null) {
-                Spacer(modifier = Modifier.height(WePrayTheme.spacing.sm))
-                Text(
-                    text = "⚠️ 먼저 Devices 탭에서 디바이스를 선택해주세요",
-                    style = WePrayTheme.typography.bodyMedium,
-                    color = WePrayTheme.colors.error,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-}
+// ============================================
+// APK 파일 리스트 섹션
+// ============================================
 
 @Composable
-private fun ApkFileList(
+private fun ApkFileListSection(
     apkFiles: List<ApkFileInfo>,
     selectedApkFile: ApkFileInfo?,
+    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
+    installStates: Map<String, InstallStatus>,
+    filterText: String,
+    sortOption: SortOption,
     onApkCardClick: (ApkFileInfo) -> Unit,
-    onInstallClick: () -> Unit
+    onInstallClick: (ApkFileInfo) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
-    ) {
-        items(apkFiles, key = { it.filePath }) { apkFile ->
-            WePrayApkFileCard(
-                fileName = apkFile.fileName,
-                modifiedDate = apkFile.modifiedDate,
-                isSelected = apkFile == selectedApkFile,
-                onCardClick = { onApkCardClick(apkFile) },
-                onInstallClick = onInstallClick
-            )
+    val listState = rememberLazyListState()
+    
+    // 필터나 정렬 옵션이 변경되면 스크롤을 최상단으로 이동
+    LaunchedEffect(filterText, sortOption) {
+        if (apkFiles.isNotEmpty()) {
+            listState.scrollToItem(0)
         }
     }
+    
+    WePrayCard(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        when {
+            // 파일이 없을 때
+            apkFiles.isEmpty() -> {
+                EmptyApkListState(
+                    selectedDevice = selectedDevice
+                )
+            }
+
+            // 파일 리스트
+            else -> {
+                LazyColumn(state = listState) {
+                    items(apkFiles, key = { it.filePath }) { apkFile ->
+                        val installStatus = installStates[apkFile.filePath]
+                        
+                        ApkListItem(
+                            apkFile = apkFile,
+                            isSelected = apkFile == selectedApkFile,
+                            installStatus = installStatus,
+                            onCardClick = { onApkCardClick(apkFile) },
+                            onInstallClick = { onInstallClick(apkFile) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApkListItem(
+    apkFile: ApkFileInfo,
+    isSelected: Boolean,
+    installStatus: InstallStatus?,
+    onCardClick: () -> Unit,
+    onInstallClick: () -> Unit,
+) {
+    val isInstalling = installStatus is InstallStatus.Installing
+    val isInstalled = installStatus is InstallStatus.Installed
+    val isError = installStatus is InstallStatus.Error
+    val errorMessage = (installStatus as? InstallStatus.Error)?.message
+    
+    WePrayApkCard(
+        fileName = apkFile.fileName,
+        version = null,
+        modifiedTime = apkFile.modifiedDate,
+        isInstalling = isInstalling,
+        isInstalled = isInstalled,
+        isError = isError,
+        errorMessage = errorMessage,
+        onCardClick = onCardClick,
+        onInstallClick = onInstallClick,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun EmptyApkListState(
+    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(WePrayTheme.spacing.xxl),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(WePrayTheme.colors.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.FolderOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = WePrayTheme.colors.textDisabled
+                )
+            }
+
+            Text(
+                text = "No APKs Found",
+                style = WePrayTheme.typography.headlineLarge,
+                color = WePrayTheme.colors.onSurface
+            )
+
+            Text(
+                text = "There are no APK files in the selected directory.\nTry browsing a different folder.",
+                style = WePrayTheme.typography.bodyMedium,
+                color = WePrayTheme.colors.textSecondary,
+                textAlign = TextAlign.Center
+            )
+
+            if (selectedDevice == null) {
+                Spacer(modifier = Modifier.height(WePrayTheme.spacing.sm))
+                Text(
+                    text = "⚠️ Please select a device from the Devices tab first",
+                    style = WePrayTheme.typography.bodyMedium,
+                    color = WePrayTheme.colors.error,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+// ============================================
+// 통계 카드 섹션
+// ============================================
+
+@Composable
+private fun StatsCardsSection(
+    totalFilesFound: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+    ) {
+        // Total Apks Found 카드
+        StatsCard(
+            icon = Icons.Outlined.Apps,
+            iconTint = WePrayTheme.colors.primary,
+            label = "Total Apks Found",
+            value = totalFilesFound.toString(),
+            progress = if (totalFilesFound > 0) 0.75f else 0f,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun StatsCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: androidx.compose.ui.graphics.Color,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    subLabel: String? = null,
+    progress: Float? = null,
+) {
+    WePrayCard(
+        modifier = modifier
+    ) {
+        Box {
+            // 백그라운드 아이콘 (희미하게)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(WePrayTheme.spacing.md)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = iconTint.copy(alpha = 0.1f)
+                )
+            }
+
+            // 컨텐츠
+            Column(
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+            ) {
+                Text(
+                    text = label,
+                    style = WePrayTheme.typography.bodyMedium,
+                    color = WePrayTheme.colors.textSecondary
+                )
+
+                Text(
+                    text = value,
+                    style = WePrayTheme.typography.displayLarge,
+                    color = WePrayTheme.colors.onSurface
+                )
+
+                if (subLabel != null) {
+                    Text(
+                        text = subLabel,
+                        style = WePrayTheme.typography.labelMedium,
+                        color = WePrayTheme.colors.textDisabled
+                    )
+                }
+
+                if (progress != null) {
+                    Spacer(modifier = Modifier.height(WePrayTheme.spacing.xs))
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(WePrayTheme.shapes.full),
+                        color = WePrayTheme.colors.primary,
+                        trackColor = WePrayTheme.colors.surfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ============================================
+// 디바이스 스토리지 카드
+// ============================================
+
+@Composable
+private fun DeviceStorageCard(
+    selectedDevice: Device?,
+    deviceStorageInfo: DeviceStorageInfo?,
+    modifier: Modifier = Modifier,
+) {
+    WePrayCard(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+        ) {
+            // 헤더
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Device Storage",
+                    style = WePrayTheme.typography.headlineMedium,
+                    color = WePrayTheme.colors.onSurface
+                )
+                Icon(
+                    imageVector = Icons.Outlined.Smartphone,
+                    contentDescription = null,
+                    tint = WePrayTheme.colors.textDisabled
+                )
+            }
+
+            if (selectedDevice != null) {
+                if (deviceStorageInfo != null) {
+                    // 사용률 표시
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Used",
+                                style = WePrayTheme.typography.bodyMedium,
+                                color = WePrayTheme.colors.textSecondary
+                            )
+                            Text(
+                                text = "${deviceStorageInfo.usedPercentage}%",
+                                style = WePrayTheme.typography.bodyMedium,
+                                color = WePrayTheme.colors.textSecondary
+                            )
+                        }
+
+                        // 멀티 프로그레스 바
+                        WePrayMultiProgressBar(
+                            segments = listOf(
+                                ProgressSegment(deviceStorageInfo.appsPercentage, WePrayTheme.colors.primary, "Apps"),
+                                ProgressSegment(deviceStorageInfo.mediaPercentage, WePrayTheme.colors.accentPurple, "Media"),
+                                ProgressSegment(deviceStorageInfo.systemPercentage, WePrayTheme.colors.success, "System")
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(12.dp)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = deviceStorageInfo.getFormattedRange(),
+                                style = WePrayTheme.typography.labelMedium,
+                                color = WePrayTheme.colors.textDisabled
+                            )
+                            Text(
+                                text = deviceStorageInfo.getFormattedFree(),
+                                style = WePrayTheme.typography.labelMedium,
+                                color = WePrayTheme.colors.success
+                            )
+                        }
+                    }
+
+                    // 범례
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                    ) {
+                        StorageLegendItem(
+                            color = WePrayTheme.colors.primary,
+                            label = "Apps"
+                        )
+                        StorageLegendItem(
+                            color = WePrayTheme.colors.accentPurple,
+                            label = "Media"
+                        )
+                        StorageLegendItem(
+                            color = WePrayTheme.colors.success,
+                            label = "System"
+                        )
+                    }
+                } else {
+                    // 로딩 중
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = WePrayTheme.spacing.lg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(32.dp),
+                            color = WePrayTheme.colors.primary
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "No device connected",
+                    style = WePrayTheme.typography.bodyMedium,
+                    color = WePrayTheme.colors.textDisabled,
+                    modifier = Modifier.padding(vertical = WePrayTheme.spacing.md)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StorageLegendItem(
+    color: androidx.compose.ui.graphics.Color,
+    label: String,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(
+            text = label,
+            style = WePrayTheme.typography.labelMedium,
+            color = WePrayTheme.colors.textDisabled
+        )
+    }
+}
+
+// ============================================
+// Drag & Drop Zone 섹션
+// ============================================
+
+@Composable
+private fun DragDropZoneSection(
+    onApkDrop: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    WePrayDragDropZone(
+        onFilesDropped = { files ->
+            // 여러 파일이 드롭되면 첫 번째 파일만 처리
+            files.firstOrNull()?.let { onApkDrop(it) }
+        },
+        title = "Drop APKs here",
+        subtitle = "or click to browse files",
+        modifier = modifier.fillMaxWidth()
+    )
 }

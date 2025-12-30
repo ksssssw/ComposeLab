@@ -1,9 +1,11 @@
 package com.ksssssw.wepray.ui.scene.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,7 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.ksssssw.wepray.domain.model.AppSettings
-import com.ksssssw.wepray.ui.components.WePrayPrimaryButton
+import com.ksssssw.wepray.ui.components.*
 import com.ksssssw.wepray.ui.theme.WePrayTheme
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
@@ -65,25 +67,24 @@ private fun SettingsContent(
     isSelecting: Boolean,
     onSelectPath: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(WePrayTheme.spacing.xl)
+            .verticalScroll(scrollState)
+            .padding(vertical = WePrayTheme.spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl)
     ) {
-        Text(
-            text = "설정",
-            style = WePrayTheme.typography.displayLarge,
-            color = WePrayTheme.colors.primary
-        )
-        
-        Spacer(modifier = Modifier.height(WePrayTheme.spacing.xl))
-        
-        // 스크린샷 저장 경로 설정
+        // Screenshot Path Setting
         ScreenshotPathSetting(
             currentPath = settings.screenshotSavePath,
             isSelecting = isSelecting,
             onSelectPath = onSelectPath
         )
+        
+        // App Info Section
+        AppInfoSection()
     }
 }
 
@@ -93,64 +94,110 @@ private fun ScreenshotPathSetting(
     isSelecting: Boolean,
     onSelectPath: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = WePrayTheme.spacing.md)
-    ) {
+    WePrayCard {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(WePrayTheme.spacing.lg)
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
         ) {
             Text(
                 text = "스크린샷 저장 경로",
                 style = WePrayTheme.typography.headlineLarge,
-                color = WePrayTheme.colors.primary
+                color = WePrayTheme.colors.textPrimary
             )
-            
-            Spacer(modifier = Modifier.height(WePrayTheme.spacing.sm))
             
             Text(
                 text = "스크린샷을 저장할 폴더를 선택하세요",
                 style = WePrayTheme.typography.bodyMedium,
-                color = WePrayTheme.colors.onSurfaceVariant
+                color = WePrayTheme.colors.textSecondary
             )
             
-            Spacer(modifier = Modifier.height(WePrayTheme.spacing.md))
-            
-            // 현재 경로 표시
+            // Current path display
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
+                Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Folder,
-                    contentDescription = null,
-                    tint = WePrayTheme.colors.onSurfaceVariant
-                )
-                
-                Text(
-                    text = currentPath ?: "기본 경로: ${AppSettings.getDefaultScreenshotPath()}",
-                    style = WePrayTheme.typography.bodyLarge,
-                    color = if (currentPath != null) {
-                        WePrayTheme.colors.onSurface
-                    } else {
-                        WePrayTheme.colors.onSurfaceVariant
-                    },
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier
+                        .background(
+                            WePrayTheme.colors.surface,
+                            WePrayTheme.shapes.default
+                        )
+                        .padding(WePrayTheme.spacing.lg)
+                        .weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Folder,
+                        contentDescription = null,
+                        tint = WePrayTheme.colors.primary
+                    )
+
+                    Text(
+                        text = currentPath ?: "기본 경로: ${AppSettings.getDefaultScreenshotPath()}",
+                        style = WePrayTheme.typography.code,
+                        color = if (currentPath != null) {
+                            WePrayTheme.colors.textPrimary
+                        } else {
+                            WePrayTheme.colors.textSecondary
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // Change path button
+                WePrayPrimaryButton(
+                    text = if (isSelecting) "선택 중..." else "경로 변경",
+                    onClick = onSelectPath,
+                    enabled = !isSelecting,
                 )
             }
-            
-            Spacer(modifier = Modifier.height(WePrayTheme.spacing.md))
-            
-            // 경로 변경 버튼
-            WePrayPrimaryButton(
-                text = if (isSelecting) "선택 중..." else "경로 변경",
-                onClick = onSelectPath,
-                enabled = !isSelecting
-            )
         }
+    }
+}
+
+@Composable
+private fun AppInfoSection() {
+    WePrayCard {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+        ) {
+            Text(
+                text = "About",
+                style = WePrayTheme.typography.headlineLarge,
+                color = WePrayTheme.colors.textPrimary
+            )
+            
+            Column(
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+            ) {
+                InfoRow(label = "Application", value = "WePray ADB Manager")
+                InfoRow(label = "Version", value = "1.0.0")
+                InfoRow(label = "Build", value = "Beta")
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = WePrayTheme.typography.bodyMedium,
+            color = WePrayTheme.colors.textSecondary
+        )
+        Text(
+            text = value,
+            style = WePrayTheme.typography.bodyMedium,
+            color = WePrayTheme.colors.textPrimary
+        )
     }
 }

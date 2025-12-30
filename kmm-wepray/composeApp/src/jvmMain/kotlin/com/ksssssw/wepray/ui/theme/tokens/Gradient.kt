@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 /**
  * WePray Gradient Patterns
  * Used for buttons, progress bars, and decorative elements
+ * Based on modern ADB dashboard design
  */
 
 object WePrayGradients {
@@ -16,50 +17,75 @@ object WePrayGradients {
      */
     val Primary = Brush.linearGradient(
         colors = listOf(
-            Color(0xFF4A9EE0),
-            Color(0xFF3A7FB0)
+            Color(0xFF135BEC),  // Primary blue
+            Color(0xFF0047D3)   // Darker blue
         ),
         start = Offset(0f, 0f),
         end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     )
 
     /**
-     * Secondary gradient - Pink theme
-     * Used for secondary buttons and highlights
+     * Surface gradient - Dark background theme
+     * Used for cards and elevated surfaces
+     * gradient-to-br from-[#1c1f27] to-[#111318]
      */
-    val Secondary = Brush.linearGradient(
+    val Surface = Brush.linearGradient(
         colors = listOf(
-            Color(0xFFE06B9E),
-            Color(0xFFC05080)
+            Color(0xFF1C1F27),
+            Color(0xFF111318)
         ),
         start = Offset(0f, 0f),
         end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     )
 
     /**
-     * Accent gradient - Gold theme
-     * Used for accent buttons and warnings
+     * Success gradient - Green theme
+     * Used for success states and progress
      */
-    val Accent = Brush.linearGradient(
+    val Success = Brush.linearGradient(
         colors = listOf(
-            Color(0xFFF4C430),
-            Color(0xFFD4A520)
+            Color(0xFF10B981),  // Emerald-500
+            Color(0xFF059669)   // Emerald-600
         ),
         start = Offset(0f, 0f),
         end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     )
 
     /**
-     * Rainbow gradient - Multi-color theme
-     * Used for progress bars and loading indicators
+     * Error gradient - Red theme
+     * Used for error states and destructive actions
      */
-    val Rainbow = Brush.linearGradient(
+    val Error = Brush.linearGradient(
         colors = listOf(
-            Color(0xFF4A9EE0),
-            Color(0xFFE06B9E),
-            Color(0xFFF4C430)
+            Color(0xFFEF4444),  // Red-500
+            Color(0xFFDC2626)   // Red-600
         ),
         start = Offset(0f, 0f),
         end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+    )
+
+    /**
+     * Warning gradient - Orange theme
+     * Used for warning states
+     */
+    val Warning = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFFF59E0B),  // Amber-500
+            Color(0xFFD97706)   // Amber-600
+        ),
+        start = Offset(0f, 0f),
+        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+    )
+
+    /**
+     * Multi-color storage gradient
+     * Used for storage visualization (Apps, Media, System)
+     */
+    val Storage = Brush.horizontalGradient(
+        colors = listOf(
+            Color(0xFF3B82F6),  // Blue (Apps)
+            Color(0xFFA855F7),  // Purple (Media)
+            Color(0xFF10B981)   // Green (System)
+        )
     )
 }

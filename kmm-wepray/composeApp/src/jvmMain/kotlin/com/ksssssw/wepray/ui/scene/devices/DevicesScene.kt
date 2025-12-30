@@ -27,7 +27,6 @@ import com.ksssssw.wepray.domain.model.Device
 import com.ksssssw.wepray.domain.model.DeviceStatus
 import com.ksssssw.wepray.ui.components.WePrayDeviceCard
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.TextDisabled
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -103,7 +102,7 @@ private fun LoadingState() {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
         ) {
             CircularProgressIndicator(
                 color = WePrayTheme.colors.primary
@@ -111,7 +110,7 @@ private fun LoadingState() {
             Text(
                 text = "디바이스를 검색하는 중...",
                 style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSecondary
+                color = WePrayTheme.colors.textPrimary
             )
         }
     }
@@ -125,23 +124,23 @@ private fun EmptyState() {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
         ) {
             Icon(
                 imageVector = Icons.Outlined.Smartphone,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextDisabled
+                modifier = Modifier.size(WePrayTheme.iconSize.decorative),
+                tint = WePrayTheme.colors.textSecondary
             )
             Text(
                 text = "연결된 디바이스가 없습니다",
                 style = WePrayTheme.typography.headlineLarge,
-                color = WePrayTheme.colors.primary
+                color = WePrayTheme.colors.textPrimary
             )
             Text(
                 text = "USB로 Android 디바이스를 연결하고\nUSB 디버깅을 활성화해주세요",
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurfaceVariant,
+                style = WePrayTheme.typography.bodyMedium,
+                color = WePrayTheme.colors.textSecondary,
                 textAlign = TextAlign.Center
             )
         }
@@ -156,7 +155,7 @@ private fun ErrorState(message: String) {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
         ) {
             Text(
                 text = "오류가 발생했습니다",
@@ -165,8 +164,8 @@ private fun ErrorState(message: String) {
             )
             Text(
                 text = message,
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurfaceVariant,
+                style = WePrayTheme.typography.bodyMedium,
+                color = WePrayTheme.colors.textSecondary,
                 textAlign = TextAlign.Center
             )
         }
@@ -212,9 +211,9 @@ private fun DeviceList(
         FlowRow(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = WePrayTheme.spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl),
+                .padding(vertical = WePrayTheme.spacing.xl),
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl),
             itemVerticalAlignment = Alignment.CenterVertically
         ) {
             devices.forEach { device ->
@@ -236,27 +235,3 @@ private fun DeviceList(
         }
     }
 }
-
-//@Preview
-//@Composable
-//fun DevicesScenePreview() {
-//    WePrayTheme {
-//        DevicesContent(
-//            uiState = DevicesUiState.Success(
-//                devices = listOf(
-//                    Device(
-//                        serialNumber = "1234567890",
-//                        modelName = "SM-S918N",
-//                        manufacturer = "Samsung",
-//                        resolution = "1080x2400",
-//                        androidVersion = "14",
-//                        sdkVersion = "34",
-//                        status = DeviceStatus.CONNECTED
-//                    )
-//                )
-//            ),
-//            selectedDevice = null,
-//            onEvent = {}
-//        )
-//    }
-//}

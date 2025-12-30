@@ -8,28 +8,25 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Usb
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
 
 /**
- * WePray Primary Button
- * 
- * 디자인 가이드 스펙:
- * - Background: Transparent → Gradient(#4A9EE0, #3A7FB0)
- * - Border: 2px solid #4A9EE0
- * - Text Color: #4A9EE0 → #FFFFFF
- * - Padding: 12px 28px
- * - Border Radius: 8px
- * - Font Weight: 600
+ * WePray Primary Button - Filled Style
+ * Based on HTML design: bg-primary hover:bg-blue-600
  */
 @Composable
 fun WePrayPrimaryButton(
@@ -37,115 +34,47 @@ fun WePrayPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    size: ButtonSize = ButtonSize.Default
-) {
-    WePrayButton(
-        text = text,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        size = size,
-        borderColor = WePrayTheme.colors.primary,
-        textColor = WePrayTheme.colors.primary,
-        hoverBackground = WePrayTheme.gradients.Primary,
-        hoverTextColor = WePrayTheme.colors.onPrimary
-    )
-}
-
-/**
- * WePray Secondary Button
- * 
- * 디자인 가이드 스펙:
- * - Background: Transparent → Gradient(#E06B9E, #C05080)
- * - Border: 2px solid #E06B9E
- * - Text Color: #E06B9E → #FFFFFF
- * - Padding: 12px 28px
- * - Border Radius: 8px
- * - Font Weight: 600
- */
-@Composable
-fun WePraySecondaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    size: ButtonSize = ButtonSize.Default
-) {
-    WePrayButton(
-        text = text,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        size = size,
-        borderColor = WePrayTheme.colors.secondary,
-        textColor = WePrayTheme.colors.secondary,
-        hoverBackground = WePrayTheme.gradients.Secondary,
-        hoverTextColor = WePrayTheme.colors.onSecondary
-    )
-}
-
-/**
- * WePray Accent Button
- * 
- * 디자인 가이드 스펙:
- * - Background: Transparent → Gradient(#F4C430, #D4A520)
- * - Border: 2px solid #F4C430
- * - Text Color: #F4C430 → #0A0A0A
- * - Padding: 12px 28px
- * - Border Radius: 8px
- * - Font Weight: 600
- */
-@Composable
-fun WePrayAccentButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    size: ButtonSize = ButtonSize.Default
-) {
-    WePrayButton(
-        text = text,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        size = size,
-        borderColor = WePrayTheme.colors.tertiary,
-        textColor = WePrayTheme.colors.tertiary,
-        hoverBackground = WePrayTheme.gradients.Accent,
-        hoverTextColor = WePrayTheme.colors.background
-    )
-}
-
-/**
- * WePray Icon Button
- * 
- * 디자인 가이드 스펙:
- * - Background: Transparent → rgba(255, 255, 255, 0.1)
- * - Border: None
- * - Icon Color: #B3B3B3 → #FFFFFF
- * - Padding: 8px
- * - Border Radius: 6px
- * - Icon Size: 24px
- */
-@Composable
-fun WePrayIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    size: ButtonSize = ButtonSize.Default,
+    icon: ImageVector? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
-    
+
+    val (horizontalPadding, verticalPadding, textStyle, iconSize) = when (size) {
+        ButtonSize.Small -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.lg,
+            vertical = WePrayTheme.spacing.sm,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
+        )
+        ButtonSize.Default -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.buttonPaddingHorizontal,
+            vertical = WePrayTheme.spacing.buttonPaddingVertical + WePrayTheme.spacing.xs,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
+        )
+        ButtonSize.Large -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.xxl,
+            vertical = WePrayTheme.spacing.buttonPaddingLarge,
+            textStyle = WePrayTheme.typography.buttonLarge,
+            iconSize = WePrayTheme.iconSize.default
+        )
+    }
+
     Box(
         modifier = modifier
-            .clip(WePrayTheme.shapes.small)
+            .shadow(
+                elevation = if (isHovered && enabled) WePrayTheme.elevation.button else 0.dp,
+                shape = WePrayTheme.shapes.button,
+                spotColor = WePrayTheme.colors.primary.copy(alpha = 0.3f)
+            )
+            .clip(WePrayTheme.shapes.button)
             .background(
-                if (isHovered && enabled) 
-                    Color.White.copy(alpha = 0.1f) 
-                else 
-                    Color.Transparent
+                if (enabled) {
+                    if (isHovered) WePrayTheme.colors.primaryHover else WePrayTheme.colors.primary
+                } else {
+                    WePrayTheme.colors.primary.copy(alpha = 0.5f)
+                }
             )
             .clickable(
                 interactionSource = interactionSource,
@@ -153,71 +82,83 @@ fun WePrayIconButton(
                 onClick = onClick,
                 enabled = enabled
             )
-            .padding(WePrayTheme.spacing.sm),
+            .padding(
+                horizontal = horizontalPadding,
+                vertical = verticalPadding
+            ),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            modifier = Modifier.size(WePrayTheme.iconSize.default),
-            tint = if (enabled) {
-                if (isHovered) WePrayTheme.colors.onSurface else WePrayTheme.colors.onSurfaceVariant
-            } else {
-                WePrayTheme.colors.onSurfaceVariant.copy(alpha = 0.4f)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(iconSize),
+                    tint = Color.White
+                )
             }
-        )
+            Text(
+                text = text,
+                style = textStyle,
+                color = if (enabled) Color.White else Color.White.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 
 /**
- * Base Button Component
+ * WePray Secondary Button - Outlined Style
+ * Based on HTML design: border with bg-white dark:bg-[#282e39]
  */
 @Composable
-private fun WePrayButton(
+fun WePraySecondaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     size: ButtonSize = ButtonSize.Default,
-    borderColor: Color,
-    textColor: Color,
-    hoverBackground: androidx.compose.ui.graphics.Brush,
-    hoverTextColor: Color
+    icon: ImageVector? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val (horizontalPadding, verticalPadding, fontSize) = when (size) {
-        ButtonSize.Small -> Triple(
-            WePrayTheme.spacing.sm + WePrayTheme.spacing.lg,
-            WePrayTheme.spacing.sm,
-            WePrayTheme.typography.bodySmall
+    val (horizontalPadding, verticalPadding, textStyle, iconSize) = when (size) {
+        ButtonSize.Small -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.lg,
+            vertical = WePrayTheme.spacing.sm,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
         )
-        ButtonSize.Default -> Triple(
-            WePrayTheme.spacing.buttonPaddingHorizontal,
-            WePrayTheme.spacing.buttonPaddingVertical,
-            WePrayTheme.typography.button
+        ButtonSize.Default -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.buttonPaddingHorizontal,
+            vertical = WePrayTheme.spacing.buttonPaddingVertical + WePrayTheme.spacing.xs,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
         )
-        ButtonSize.Large -> Triple(
-            WePrayTheme.spacing.lg + WePrayTheme.spacing.xl,
-            WePrayTheme.spacing.lg,
-            WePrayTheme.typography.bodyLarge
+        ButtonSize.Large -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.xxl,
+            vertical = WePrayTheme.spacing.buttonPaddingLarge,
+            textStyle = WePrayTheme.typography.buttonLarge,
+            iconSize = WePrayTheme.iconSize.default
         )
     }
 
     Box(
         modifier = modifier
             .clip(WePrayTheme.shapes.button)
-            .then(
-                if (isHovered && enabled) {
-                    Modifier.background(hoverBackground)
+            .background(
+                if (enabled) {
+                    if (isHovered) WePrayTheme.colors.surfaceElevated else WePrayTheme.colors.surfaceVariant
                 } else {
-                    Modifier.background(Color.Transparent)
+                    WePrayTheme.colors.surfaceVariant.copy(alpha = 0.5f)
                 }
             )
             .border(
-                width = 2.dp,
-                color = if (enabled) borderColor else borderColor.copy(alpha = 0.4f),
+                width = 1.dp,
+                color = if (enabled) WePrayTheme.colors.borderSecondary else WePrayTheme.colors.borderSecondary.copy(alpha = 0.5f),
                 shape = WePrayTheme.shapes.button
             )
             .clickable(
@@ -232,17 +173,198 @@ private fun WePrayButton(
             ),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            style = fontSize,
-            color = if (enabled) {
-                if (isHovered) hoverTextColor else textColor
-            } else {
-                textColor.copy(alpha = 0.4f)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(iconSize),
+                    tint = if (enabled) WePrayTheme.colors.textPrimary else WePrayTheme.colors.textDisabled
+                )
             }
-        )
+            if (text.isNotEmpty()) {
+                Text(
+                    text = text,
+                    style = textStyle.copy(fontWeight = FontWeight.Medium),
+                    color = if (enabled) WePrayTheme.colors.textPrimary else WePrayTheme.colors.textDisabled
+                )
+            }
+        }
     }
 }
+
+/**
+ * WePray Ghost Button - Text only with hover effect
+ * Minimal button style
+ */
+@Composable
+fun WePrayGhostButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    size: ButtonSize = ButtonSize.Default,
+    icon: ImageVector? = null,
+    color: Color = WePrayTheme.colors.primary
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val (horizontalPadding, verticalPadding, textStyle, iconSize) = when (size) {
+        ButtonSize.Small -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.md,
+            vertical = WePrayTheme.spacing.xs,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
+        )
+        ButtonSize.Default -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.lg,
+            vertical = WePrayTheme.spacing.md,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
+        )
+        ButtonSize.Large -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.xl,
+            vertical = WePrayTheme.spacing.lg,
+            textStyle = WePrayTheme.typography.buttonLarge,
+            iconSize = WePrayTheme.iconSize.default
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .clip(WePrayTheme.shapes.button)
+            .background(
+                if (isHovered && enabled) 
+                    color.copy(alpha = 0.1f) 
+                else 
+                    Color.Transparent
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                enabled = enabled
+            )
+            .padding(
+                horizontal = horizontalPadding,
+                vertical = verticalPadding
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(iconSize),
+                    tint = if (enabled) color else WePrayTheme.colors.textDisabled
+                )
+            }
+            Text(
+                text = text,
+                style = textStyle.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
+                color = if (enabled) {
+                    if (isHovered) color else WePrayTheme.colors.textSecondary
+                } else {
+                    WePrayTheme.colors.textDisabled
+                }
+            )
+        }
+    }
+}
+
+/**
+ * WePray Danger Button - For destructive actions
+ */
+@Composable
+fun WePrayDangerButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    size: ButtonSize = ButtonSize.Default,
+    icon: ImageVector? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val (horizontalPadding, verticalPadding, textStyle, iconSize) = when (size) {
+        ButtonSize.Small -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.lg,
+            vertical = WePrayTheme.spacing.sm,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
+        )
+        ButtonSize.Default -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.buttonPaddingHorizontal,
+            vertical = WePrayTheme.spacing.buttonPaddingVertical + WePrayTheme.spacing.xs,
+            textStyle = WePrayTheme.typography.button,
+            iconSize = WePrayTheme.iconSize.button
+        )
+        ButtonSize.Large -> ButtonSizeSpec(
+            horizontal = WePrayTheme.spacing.xxl,
+            vertical = WePrayTheme.spacing.buttonPaddingLarge,
+            textStyle = WePrayTheme.typography.buttonLarge,
+            iconSize = WePrayTheme.iconSize.default
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .clip(WePrayTheme.shapes.button)
+            .background(
+                if (enabled) {
+                    if (isHovered) WePrayTheme.colors.errorLight else WePrayTheme.colors.error
+                } else {
+                    WePrayTheme.colors.error.copy(alpha = 0.5f)
+                }
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                enabled = enabled
+            )
+            .padding(
+                horizontal = horizontalPadding,
+                vertical = verticalPadding
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(iconSize),
+                    tint = Color.White
+                )
+            }
+            Text(
+                text = text,
+                style = textStyle,
+                color = if (enabled) Color.White else Color.White.copy(alpha = 0.6f)
+            )
+        }
+    }
+}
+
+data class ButtonSizeSpec(
+    val horizontal: androidx.compose.ui.unit.Dp,
+    val vertical: androidx.compose.ui.unit.Dp,
+    val textStyle: androidx.compose.ui.text.TextStyle,
+    val iconSize: androidx.compose.ui.unit.Dp
+)
 
 enum class ButtonSize {
     Small,
@@ -256,14 +378,14 @@ private fun ButtonPreview() {
     WePrayTheme {
         Column(
             modifier = Modifier
-                .width(600.dp)
+                .width(800.dp)
                 .background(WePrayTheme.colors.background)
-                .padding(WePrayTheme.spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
+                .padding(WePrayTheme.spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xxxl)
         ) {
             // Primary Buttons
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
             ) {
                 Text(
                     text = "Primary Buttons",
@@ -295,11 +417,27 @@ private fun ButtonPreview() {
                         enabled = false
                     )
                 }
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                ) {
+                    WePrayPrimaryButton(
+                        text = "Connect Device",
+                        onClick = {},
+                        icon = Icons.Outlined.Usb
+                    )
+                    WePrayPrimaryButton(
+                        text = "Install",
+                        onClick = {},
+                        icon = Icons.Outlined.Download,
+                        size = ButtonSize.Small
+                    )
+                }
             }
             
             // Secondary Buttons
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
             ) {
                 Text(
                     text = "Secondary Buttons",
@@ -311,7 +449,11 @@ private fun ButtonPreview() {
                     horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
                 ) {
                     WePraySecondaryButton(
-                        text = "Secondary",
+                        text = "Re-Install",
+                        onClick = {}
+                    )
+                    WePraySecondaryButton(
+                        text = "Push OBB",
                         onClick = {}
                     )
                     WePraySecondaryButton(
@@ -320,14 +462,25 @@ private fun ButtonPreview() {
                         enabled = false
                     )
                 }
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                ) {
+                    WePraySecondaryButton(
+                        text = "Refresh",
+                        onClick = {},
+                        icon = Icons.Outlined.Refresh,
+                        size = ButtonSize.Small
+                    )
+                }
             }
             
-            // Accent Buttons
+            // Ghost Buttons
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
             ) {
                 Text(
-                    text = "Accent Buttons",
+                    text = "Ghost Buttons",
                     style = WePrayTheme.typography.headlineLarge,
                     color = WePrayTheme.colors.onBackground
                 )
@@ -335,11 +488,15 @@ private fun ButtonPreview() {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
                 ) {
-                    WePrayAccentButton(
-                        text = "Accent",
+                    WePrayGhostButton(
+                        text = "Dashboard",
                         onClick = {}
                     )
-                    WePrayAccentButton(
+                    WePrayGhostButton(
+                        text = "File Manager",
+                        onClick = {}
+                    )
+                    WePrayGhostButton(
                         text = "Disabled",
                         onClick = {},
                         enabled = false
@@ -347,12 +504,12 @@ private fun ButtonPreview() {
                 }
             }
             
-            // Icon Buttons
+            // Danger Buttons
             Column(
-                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
             ) {
                 Text(
-                    text = "Icon Buttons",
+                    text = "Danger Buttons",
                     style = WePrayTheme.typography.headlineLarge,
                     color = WePrayTheme.colors.onBackground
                 )
@@ -360,14 +517,17 @@ private fun ButtonPreview() {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
                 ) {
-                    WePrayIconButton(
-                        icon = Icons.Outlined.Refresh,
-                        contentDescription = "Refresh",
+                    WePrayDangerButton(
+                        text = "Delete",
                         onClick = {}
                     )
-                    WePrayIconButton(
-                        icon = Icons.Outlined.Refresh,
-                        contentDescription = "Refresh",
+                    WePrayDangerButton(
+                        text = "Delete All",
+                        onClick = {},
+                        size = ButtonSize.Small
+                    )
+                    WePrayDangerButton(
+                        text = "Disabled",
                         onClick = {},
                         enabled = false
                     )

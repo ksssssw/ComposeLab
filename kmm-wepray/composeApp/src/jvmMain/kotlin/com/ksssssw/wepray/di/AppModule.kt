@@ -9,6 +9,7 @@ import com.ksssssw.wepray.data.repository.DeviceRepositoryImpl
 import com.ksssssw.wepray.data.repository.SettingsRepositoryImpl
 import com.ksssssw.wepray.domain.repository.DeviceRepository
 import com.ksssssw.wepray.domain.repository.SettingsRepository
+import com.ksssssw.wepray.domain.usecase.GetDeviceStorageUseCase
 import com.ksssssw.wepray.domain.usecase.InstallApkUseCase
 import com.ksssssw.wepray.domain.usecase.RefreshDevicesUseCase
 import com.ksssssw.wepray.domain.usecase.SelectApkFolderUseCase
@@ -52,7 +53,12 @@ val dataModule = module {
     singleOf(::AdbManager)
     
     // Repositories
-    singleOf(::DeviceRepositoryImpl) bind DeviceRepository::class
+    single<DeviceRepository> {
+        DeviceRepositoryImpl(
+            adbManager = get(),
+            getDeviceStorageUseCase = get()
+        )
+    }
     singleOf(::SettingsRepositoryImpl) bind SettingsRepository::class
 }
 
@@ -66,6 +72,7 @@ val domainModule = module {
     factory { TakeScreenshotUseCase(get(), get(), get()) }
     factory { SelectApkFolderUseCase() }
     factory { InstallApkUseCase(get()) }
+    factory { GetDeviceStorageUseCase(get()) }
 }
 
 /**
@@ -82,7 +89,7 @@ val uiModule = module {
     // Settings 화면 ViewModel
     viewModelOf(::SettingsViewModel)
     
-    // Installer 화면 ViewModel
+    // Installer 화면 ViewModel (3개 파라미터)
     viewModelOf(::InstallerViewModel)
 }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -14,19 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
-import com.ksssssw.wepray.ui.theme.tokens.BorderColor
 
 /**
  * WePray Top Bar
- * 
- * 디자인 가이드 스펙:
- * - Background: rgba(26, 26, 26, 0.95)
- * - Border: 1px solid rgba(255, 255, 255, 0.1)
- * - Border Radius: 12px
- * - Padding: 20px 30px
- * - Display: Flex space-between
- * 
- * Structure: [Device Icon + Info] [Actions]
+ * Based on HTML sticky header design
  */
 @Composable
 fun WePrayTopBar(
@@ -39,74 +31,35 @@ fun WePrayTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(WePrayTheme.shapes.default)
-            .background(WePrayTheme.colors.surface.copy(alpha = 0.95f))
+            .clip(WePrayTheme.shapes.card)
+            .background(WePrayTheme.colors.surfaceVariant)
             .border(
                 width = 1.dp,
-                color = BorderColor,
-                shape = WePrayTheme.shapes.default
+                color = WePrayTheme.colors.border,
+                shape = WePrayTheme.shapes.card
             )
-            .padding(
-                horizontal = WePrayTheme.spacing.xl + WePrayTheme.spacing.lg,
-                vertical = WePrayTheme.spacing.xl
-            ),
+            .padding(WePrayTheme.spacing.cardPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 디바이스 정보
+        // Title and description
         Column(
             verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
         ) {
             Text(
                 text = title,
-                style = WePrayTheme.typography.bodyLarge,
-                color = WePrayTheme.colors.onSurface
+                style = WePrayTheme.typography.headlineLarge,
+                color = WePrayTheme.colors.textPrimary
             )
 
             Text(
                 text = description,
                 style = WePrayTheme.typography.bodySmall,
-                color = WePrayTheme.colors.onSurfaceVariant
+                color = WePrayTheme.colors.textSecondary
             )
         }
-
-//        if (deviceInfo != null) {
-//            Row(
-//                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg),
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Icon(
-//                    imageVector = deviceInfo.icon,
-//                    contentDescription = "Device",
-//                    modifier = Modifier.size(WePrayTheme.iconSize.medium),
-//                    tint = WePrayTheme.colors.primary
-//                )
-//
-//                Column(
-//                    verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
-//                ) {
-//                    Text(
-//                        text = deviceInfo.name,
-//                        style = WePrayTheme.typography.bodyLarge,
-//                        color = WePrayTheme.colors.onSurface
-//                    )
-//
-//                    Text(
-//                        text = deviceInfo.model,
-//                        style = WePrayTheme.typography.bodySmall,
-//                        color = WePrayTheme.colors.onSurfaceVariant
-//                    )
-//                }
-//            }
-//        } else {
-//            Text(
-//                text = "디바이스가 연결되지 않았습니다",
-//                style = WePrayTheme.typography.bodyMedium,
-//                color = WePrayTheme.colors.onSurfaceVariant
-//            )
-//        }
         
-        // 액션 버튼들
+        // Action buttons
         Row(
             horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
             verticalAlignment = Alignment.CenterVertically
@@ -131,24 +84,49 @@ private fun TopBarPreview() {
     WePrayTheme {
         Column(
             modifier = Modifier
-                .width(800.dp)
+                .width(900.dp)
                 .background(WePrayTheme.colors.background)
-                .padding(WePrayTheme.spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+                .padding(WePrayTheme.spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
         ) {
-            // 디바이스 연결됨
+            // Basic top bar
+            WePrayTopBar(
+                title = "APK Installer",
+                description = "Manage and install APK files from your local machine",
+                actions = {
+                    WePrayConnectionBadge(
+                        deviceName = "Samsung SM-G991B",
+                        isConnected = true
+                    )
+                }
+            )
+            
+            // Without connection
             WePrayTopBar(
                 title = "Devices",
-                description = "연결된 디바이스 목록",
-                deviceInfo = DeviceInfo(
-                    icon = Icons.Outlined.Smartphone,
-                    name = "Galaxy S23",
-                    model = "Android 14 (API 34)"
-                ),
+                description = "Connect your Android device via ADB",
                 actions = {
-                    WePrayBadge(
-                        text = "연결됨",
-                        variant = BadgeVariant.Success
+                    WePrayConnectionBadge(
+                        deviceName = "",
+                        isConnected = false
+                    )
+                }
+            )
+            
+            // With multiple actions
+            WePrayTopBar(
+                title = "Deep Linker",
+                description = "Test deep links and app intents",
+                actions = {
+                    WePrayPrimaryButton(
+                        text = "Test Link",
+                        onClick = {},
+                        size = ButtonSize.Small
+                    )
+                    WePrayIconButton(
+                        icon = androidx.compose.material.icons.Icons.Outlined.Settings,
+                        contentDescription = "Settings",
+                        onClick = {}
                     )
                 }
             )

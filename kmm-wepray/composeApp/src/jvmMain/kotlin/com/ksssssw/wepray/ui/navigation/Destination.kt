@@ -21,25 +21,25 @@ enum class TopLevelDestination(
     DEVICES(
         route = Devices,
         label = "Devices",
-        description = "연결된 디바이스 목록",
+        description = "View and manage connected devices",
         icon = Icons.Outlined.Devices
     ),
     INSTALLER(
         route = Installer,
         label = "APK Install",
-        description = "APK 설치",
+        description = "Install APK files to devices",
         icon = Icons.Outlined.InstallMobile
     ),
     DEEP_LINKER(
         route = DeepLinker,
         label = "DeepLinks",
-        description = "DeepLinks 테스트",
+        description = "Test deep links and app intents on your connected device",
         icon = Icons.Outlined.Link
     ),
     SETTINGS(
         route = Settings,
         label = "Settings",
-        description = "설정",
+        description = "Configure application settings",
         icon = Icons.Outlined.Settings
     )
     ;

@@ -1,6 +1,7 @@
 package com.ksssssw.wepray.domain.repository
 
 import com.ksssssw.wepray.domain.model.Device
+import com.ksssssw.wepray.domain.model.DeviceStorageInfo
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
  * Single Source of Truth:
  * - 디바이스 목록 (실시간 업데이트)
  * - 현재 선택된 디바이스
+ * - 디바이스 스토리지 정보
  */
 interface DeviceRepository {
     /**
@@ -61,4 +63,12 @@ interface DeviceRepository {
      * @param devices 새로운 디바이스 목록
      */
     suspend fun updateDevices(devices: List<Device>)
+    
+    /**
+     * 현재 선택된 디바이스의 스토리지 정보를 관찰합니다.
+     * 선택된 디바이스가 변경되면 자동으로 해당 디바이스의 스토리지 정보를 가져옵니다.
+     * 
+     * @return 디바이스 스토리지 정보의 Flow (null 가능)
+     */
+    fun observeSelectedDeviceStorageInfo(): Flow<DeviceStorageInfo?>
 }

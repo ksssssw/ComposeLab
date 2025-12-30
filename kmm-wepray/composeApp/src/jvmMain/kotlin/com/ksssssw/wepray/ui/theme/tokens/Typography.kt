@@ -10,114 +10,144 @@ import androidx.compose.ui.unit.sp
 /**
  * WePray Typography
  * Font sizes, weights, and line heights for text hierarchy
+ * Based on modern ADB dashboard design
  */
 
 @Immutable
 data class WePrayTypography(
-    // Heading 1 - Page Title (48px)
+    // Display - Large titles (3xl) - Page Title
     val displayLarge: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
-        fontSize = 48.sp,
-        lineHeight = 57.6.sp,
-        letterSpacing = 0.sp
+        fontSize = 30.sp,         // text-3xl
+        lineHeight = 36.sp,
+        letterSpacing = (-0.45).sp  // tracking-tight
     ),
 
-    // Heading 2 - Section Title (28.8px)
+    // Display Medium - Section Title (2xl)
     val displayMedium: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 28.8.sp,
-        lineHeight = 34.56.sp,
-        letterSpacing = 0.sp
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,         // text-2xl
+        lineHeight = 32.sp,
+        letterSpacing = (-0.36).sp
     ),
 
-    // Heading 3 - Subsection Title (24px)
+    // Display Small - Subsection Title (xl)
     val displaySmall: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 28.8.sp,
-        letterSpacing = 0.sp
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,         // text-xl
+        lineHeight = 28.sp,
+        letterSpacing = (-0.3).sp
     ),
 
-    // Heading 4 - Card Title (20.8px)
+    // Headline Large - Card Title (lg)
     val headlineLarge: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,         // text-lg
+        lineHeight = 28.sp,
+        letterSpacing = (-0.27).sp
+    ),
+
+    // Headline Medium
+    val headlineMedium: TextStyle = TextStyle(
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.8.sp,
-        lineHeight = 24.96.sp,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
         letterSpacing = 0.sp
     ),
 
-    // Body Large - Emphasized Text (17.6px)
+    // Body Large - Emphasized Text
     val bodyLarge: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 17.6.sp,
-        lineHeight = 26.4.sp,
-        letterSpacing = 0.5.sp
+        fontSize = 16.sp,         // text-base
+        lineHeight = 24.sp,
+        letterSpacing = 0.sp
     ),
 
-    // Body - Default Text (16px)
+    // Body Medium - Default Text (sm)
     val bodyMedium: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        fontSize = 14.sp,         // text-sm
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
     ),
 
-    // Body Small - Secondary Text (14.4px)
+    // Body Small - Secondary Text (xs)
     val bodySmall: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.4.sp,
-        lineHeight = 21.6.sp,
-        letterSpacing = 0.25.sp
+        fontSize = 12.sp,         // text-xs
+        lineHeight = 16.sp,
+        letterSpacing = 0.sp
     ),
 
-    // Caption - Meta Information (13.6px)
+    // Label Large - Meta Information
     val labelLarge: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 13.6.sp,
-        lineHeight = 20.4.sp,
-        letterSpacing = 0.1.sp
+        fontSize = 14.sp,         // text-sm font-medium
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
     ),
 
-    // Label Small - Labels, Badges (12.8px)
+    // Label Medium - Labels, Badges
     val labelMedium: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 12.8.sp,
+        fontSize = 12.sp,         // text-xs font-medium
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.sp
     ),
 
-    // Label Smallest - Tiny labels (11px)
+    // Label Small - Tiny labels
     val labelSmall: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.1.sp
     ),
 
     // Button text
     val button: TextStyle = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        letterSpacing = 0.5.sp
+        fontWeight = FontWeight.Bold,    // font-bold
+        fontSize = 14.sp,                // text-sm
+        lineHeight = 20.sp,
+        letterSpacing = 0.24.sp          // tracking-[0.015em]
     ),
 
-    // Code / Monospace text
+    // Button Large
+    val buttonLarge: TextStyle = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.24.sp
+    ),
+
+    // Code / Monospace text (font-mono)
     val code: TextStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 21.sp
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
+    ),
+
+    // Uppercase labels (tracking-wider)
+    val overline: TextStyle = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,                // text-xs
+        lineHeight = 16.sp,
+        letterSpacing = 0.96.sp          // tracking-wider (0.05em)
     )
 )
 

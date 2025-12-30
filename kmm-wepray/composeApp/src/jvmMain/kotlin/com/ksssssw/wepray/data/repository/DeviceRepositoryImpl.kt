@@ -3,12 +3,15 @@ package com.ksssssw.wepray.data.repository
 import com.ksssssw.wepray.data.adb.AdbCommand
 import com.ksssssw.wepray.data.adb.AdbManager
 import com.ksssssw.wepray.domain.model.Device
+import com.ksssssw.wepray.domain.model.DeviceStorageInfo
 import com.ksssssw.wepray.domain.repository.DeviceRepository
+import com.ksssssw.wepray.domain.usecase.GetDeviceStorageUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 /**
  * DeviceRepository의 구현체
@@ -17,11 +20,14 @@ import kotlinx.coroutines.flow.flow
  * Single Source of Truth:
  * - 디바이스 목록 (StateFlow로 캐싱)
  * - 선택된 디바이스 (StateFlow)
+ * - 디바이스 스토리지 정보 (선택된 디바이스 기반 자동 계산)
  * 
  * @property adbManager ADB 명령을 실행하는 매니저
+ * @property getDeviceStorageUseCase 디바이스 스토리지 정보 조회 UseCase
  */
 class DeviceRepositoryImpl(
-    private val adbManager: AdbManager
+    private val adbManager: AdbManager,
+    private val getDeviceStorageUseCase: GetDeviceStorageUseCase
 ) : DeviceRepository {
     
     // 캐시된 디바이스 목록 (앱 전역)
@@ -74,5 +80,25 @@ class DeviceRepositoryImpl(
     
     override suspend fun updateDevices(devices: List<Device>) {
         _cachedDevices.value = devices
+    }
+    
+    override fun observeSelectedDeviceStorageInfo(): Flow<DeviceStorageInfo?> {
+        return _selectedDevice.asStateFlow().map { device ->
+            if (device != null) {
+                println("📱 Device changed: ${device.serialNumber}, loading storage info...")
+                val result = getDeviceStorageUseCase(device)
+                if (result.isSuccess) {
+                    val storage = result.getOrNull()
+                    println("✅ Device storage loaded: ${storage?.usedPercentage}% used")
+                    storage
+                } else {
+                    println("⚠️ Failed to load device storage: ${result.exceptionOrNull()?.message}")
+                    null
+                }
+            } else {
+                println("📱 No device selected")
+                null
+            }
+        }
     }
 }
