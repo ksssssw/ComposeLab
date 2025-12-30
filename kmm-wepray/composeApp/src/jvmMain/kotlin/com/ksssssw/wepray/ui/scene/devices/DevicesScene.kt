@@ -45,17 +45,24 @@ fun DevicesScene(
     viewModel: DevicesViewModel = koinViewModel(),
 ) {
     val deviceState by viewModel.deviceState.collectAsStateWithLifecycle()
+    val screenshotState by viewModel.screenshotState.collectAsStateWithLifecycle()
 
     DevicesContent(
         deviceState = deviceState,
-        onDeviceSelect = viewModel::selectDevice
+        screenshotState = screenshotState,
+        onDeviceSelect = viewModel::selectDevice,
+        onScreenshotClick = viewModel::takeScreenshot,
+        onResetScreenshotState = viewModel::resetScreenshotState
     )
 }
 
 @Composable
 private fun DevicesContent(
     deviceState: DevicesUiState,
+    screenshotState: ScreenshotState,
     onDeviceSelect: (Device) -> Unit,
+    onScreenshotClick: (Device) -> Unit,
+    onResetScreenshotState: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -73,7 +80,10 @@ private fun DevicesContent(
                     DeviceList(
                         devices = deviceState.devices,
                         selectedDevice = deviceState.selectedDevice,
-                        onDeviceSelect = onDeviceSelect
+                        screenshotState = screenshotState,
+                        onDeviceSelect = onDeviceSelect,
+                        onScreenshotClick = onScreenshotClick,
+                        onResetScreenshotState = onResetScreenshotState
                     )
                 }
             }
@@ -167,9 +177,32 @@ private fun ErrorState(message: String) {
 private fun DeviceList(
     devices: List<Device>,
     selectedDevice: Device?,
+    screenshotState: ScreenshotState,
     onDeviceSelect: (Device) -> Unit,
+    onScreenshotClick: (Device) -> Unit,
+    onResetScreenshotState: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
+
+    // 스크린샷 결과 스낵바 처리
+    when (screenshotState) {
+        is ScreenshotState.Success -> {
+            // 성공 메시지 표시 (간단한 구현)
+            println("✅ 스크린샷 저장됨: ${screenshotState.filePath}")
+            onResetScreenshotState()
+        }
+        is ScreenshotState.Cancelled -> {
+            // 취소 메시지 표시
+            println("ℹ️ 스크린샷 경로 선택이 취소되었습니다")
+            onResetScreenshotState()
+        }
+        is ScreenshotState.Error -> {
+            // 에러 메시지 표시 (간단한 구현)
+            println("❌ 스크린샷 실패: ${screenshotState.message}")
+            onResetScreenshotState()
+        }
+        else -> { /* Loading or Idle */ }
+    }
 
     Column(
         modifier = Modifier
@@ -197,7 +230,7 @@ private fun DeviceList(
                     icon = Icons.Outlined.Smartphone,
                     onCardClick = { onDeviceSelect(device) },
                     onMirroringClick = { /* TODO: 미러링 기능 구현 */ },
-                    onScreenshotClick = { /* TODO: 스크린샷 기능 구현 */ }
+                    onScreenshotClick = { onScreenshotClick(device) }
                 )
             }
         }

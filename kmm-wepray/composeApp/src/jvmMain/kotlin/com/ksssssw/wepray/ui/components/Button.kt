@@ -186,7 +186,7 @@ private fun WePrayButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
-    
+
     val (horizontalPadding, verticalPadding, fontSize) = when (size) {
         ButtonSize.Small -> Triple(
             WePrayTheme.spacing.sm + WePrayTheme.spacing.lg,
@@ -204,7 +204,7 @@ private fun WePrayButton(
             WePrayTheme.typography.bodyLarge
         )
     }
-    
+
     Box(
         modifier = modifier
             .clip(WePrayTheme.shapes.button)

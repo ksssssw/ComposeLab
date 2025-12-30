@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 kotlin {
@@ -30,6 +32,8 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+            implementation(libs.room.runtime)
+            implementation(libs.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -41,6 +45,15 @@ kotlin {
     }
 }
 
+// Room 설정
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+// KSP 설정
+dependencies {
+    add("kspCommonMainMetadata", libs.room.compiler)
+}
 
 compose.desktop {
     application {
@@ -50,6 +63,12 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.ksssssw.wepray"
             packageVersion = "1.0.0"
+
+            val iconsRoot = project.file("icons")
+            macOS {
+                bundleID = "com.ksssssw.wepray"
+                iconFile.set(iconsRoot.resolve("icon-mac.icns"))
+            }
         }
     }
 }
