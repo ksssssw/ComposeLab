@@ -44,12 +44,46 @@ class SettingsRepositoryImpl(
         }
     }
     
+    override suspend fun updateApkFolderPath(path: String) {
+        val currentSettings = appSettingsDao.getSettingsOnce()
+        if (currentSettings == null) {
+            // 설정이 없으면 새로 생성
+            appSettingsDao.insertSettings(
+                AppSettingsEntity(
+                    id = 1,
+                    apkFolderPath = path
+                )
+            )
+        } else {
+            // 기존 설정 업데이트
+            appSettingsDao.updateApkFolderPath(path)
+        }
+    }
+    
+    override suspend fun updateLastSelectedTab(tab: String) {
+        val currentSettings = appSettingsDao.getSettingsOnce()
+        if (currentSettings == null) {
+            // 설정이 없으면 새로 생성
+            appSettingsDao.insertSettings(
+                AppSettingsEntity(
+                    id = 1,
+                    lastSelectedTab = tab
+                )
+            )
+        } else {
+            // 기존 설정 업데이트
+            appSettingsDao.updateLastSelectedTab(tab)
+        }
+    }
+    
     /**
      * Entity를 Domain 모델로 변환
      */
     private fun AppSettingsEntity.toDomain(): AppSettings {
         return AppSettings(
-            screenshotSavePath = screenshotSavePath
+            screenshotSavePath = screenshotSavePath,
+            apkFolderPath = apkFolderPath,
+            lastSelectedTab = lastSelectedTab
         )
     }
 }

@@ -53,6 +53,7 @@ room {
 // KSP 설정
 dependencies {
     add("kspCommonMainMetadata", libs.room.compiler)
+    add("kspJvm", libs.room.compiler)
 }
 
 compose.desktop {
@@ -60,13 +61,19 @@ compose.desktop {
         mainClass = "com.ksssssw.wepray.MainKt"
 
         nativeDistributions {
+            val appName = "WePray"
+            val appPackageName = "com.ksssssw.wepray"
+            val appVersion = "1.0.0"
+
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.ksssssw.wepray"
-            packageVersion = "1.0.0"
+            packageName = appName
+            packageVersion = appVersion
 
             val iconsRoot = project.file("icons")
             macOS {
-                bundleID = "com.ksssssw.wepray"
+                bundleID = appPackageName
+                packageName = appName
+                packageVersion = appVersion
                 iconFile.set(iconsRoot.resolve("icon-mac.icns"))
             }
         }

@@ -5,15 +5,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import com.ksssssw.wepray.domain.model.DeviceStatus
 import com.ksssssw.wepray.ui.components.DeviceInfo
 import com.ksssssw.wepray.ui.components.IconButtonSize
@@ -35,11 +39,29 @@ fun WePrayApp(
     appViewModel: WePrayAppViewModel = koinViewModel()
 ) {
     val appUiState by appViewModel.appState.collectAsStateWithLifecycle()
+    val lastSelectedTab by appViewModel.lastSelectedTab.collectAsStateWithLifecycle()
     
     WePrayTheme {
-        val backStack = remember { mutableStateListOf(TopLevelDestination.START_DESTINATION.route) }
+        // 마지막 선택한 탭으로 초기화 (없으면 기본 탭)
+        val initialRoute = lastSelectedTab?.let { tabName ->
+            TopLevelDestination.entries.find { it.name == tabName }?.route
+        } ?: TopLevelDestination.START_DESTINATION.route
+        
+        val backStack = remember(initialRoute) { 
+            mutableStateListOf(initialRoute) 
+        }
         val currentDestination = backStack.lastOrNull()
         val topLevelDestination = TopLevelDestination.fromDestination(currentDestination as NavKey)
+        
+        // 탭 변경 감지 및 저장 (초기 로드는 무시)
+        LaunchedEffect(backStack) {
+            snapshotFlow { topLevelDestination }
+                .drop(1) // 초기 값 무시
+                .distinctUntilChanged()
+                .collect { destination ->
+                    appViewModel.saveSelectedTab(destination.name)
+                }
+        }
         
         // 디바이스 목록과 선택된 디바이스 모두 appViewModel에서 가져옴 (Repository 구독)
         val devices = appUiState.devices

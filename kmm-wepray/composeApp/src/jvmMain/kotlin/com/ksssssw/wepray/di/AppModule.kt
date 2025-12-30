@@ -1,7 +1,10 @@
 package com.ksssssw.wepray.di
 
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import com.ksssssw.wepray.WePrayAppViewModel
 import com.ksssssw.wepray.data.adb.AdbManager
 import com.ksssssw.wepray.data.local.WePrayDatabase
@@ -30,6 +33,21 @@ import java.io.File
  */
 
 /**
+ * Database 마이그레이션: v1 -> v2
+ * apkFolderPath와 lastSelectedTab 컬럼 추가
+ */
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE app_settings ADD COLUMN apkFolderPath TEXT DEFAULT NULL"
+        )
+        connection.execSQL(
+            "ALTER TABLE app_settings ADD COLUMN lastSelectedTab TEXT DEFAULT NULL"
+        )
+    }
+}
+
+/**
  * Data Layer 모듈
  */
 val dataModule = module {
@@ -43,6 +61,7 @@ val dataModule = module {
         )
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
+            .addMigrations(MIGRATION_1_2)
             .build()
     }
     

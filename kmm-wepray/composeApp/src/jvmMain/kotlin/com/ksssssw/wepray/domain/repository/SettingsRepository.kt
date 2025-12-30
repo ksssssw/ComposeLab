@@ -31,5 +31,19 @@ interface SettingsRepository {
      * @param path 새로운 저장 경로
      */
     suspend fun updateScreenshotSavePath(path: String)
+    
+    /**
+     * APK 폴더 경로를 업데이트합니다.
+     * 
+     * @param path 새로운 APK 폴더 경로
+     */
+    suspend fun updateApkFolderPath(path: String)
+    
+    /**
+     * 마지막으로 선택한 탭을 업데이트합니다.
+     * 
+     * @param tab 탭 이름
+     */
+    suspend fun updateLastSelectedTab(tab: String)
 }
 

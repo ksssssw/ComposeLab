@@ -44,5 +44,17 @@ interface AppSettingsDao {
      */
     @Query("UPDATE app_settings SET screenshotSavePath = :path WHERE id = 1")
     suspend fun updateScreenshotSavePath(path: String)
+    
+    /**
+     * APK 폴더 경로만 업데이트
+     */
+    @Query("UPDATE app_settings SET apkFolderPath = :path WHERE id = 1")
+    suspend fun updateApkFolderPath(path: String)
+    
+    /**
+     * 마지막 선택한 탭만 업데이트
+     */
+    @Query("UPDATE app_settings SET lastSelectedTab = :tab WHERE id = 1")
+    suspend fun updateLastSelectedTab(tab: String)
 }
 

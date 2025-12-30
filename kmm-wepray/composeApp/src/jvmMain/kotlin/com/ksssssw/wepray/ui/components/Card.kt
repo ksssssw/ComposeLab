@@ -96,14 +96,14 @@ fun WePrayApkCard(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
-    
+
     val iconColor = when {
         isError -> WePrayTheme.colors.error
         isInstalling -> WePrayTheme.colors.primary
         isInstalled -> WePrayTheme.colors.success
         else -> WePrayTheme.colors.accentEmerald
     }
-    
+
     val icon = when {
         isError -> Icons.Outlined.Warning
         isInstalling -> Icons.Outlined.Sync
@@ -116,9 +116,9 @@ fun WePrayApkCard(
             .fillMaxWidth()
             .clip(WePrayTheme.shapes.default)
             .background(
-                if (isHovered) 
+                if (isHovered)
                     WePrayTheme.colors.surfaceElevated
-                else 
+                else
                     Color.Transparent
             )
             .clickable(
@@ -148,7 +148,7 @@ fun WePrayApkCard(
                 tint = iconColor
             )
         }
-        
+
         // File info
         Column(
             modifier = Modifier.weight(1f),
@@ -166,7 +166,7 @@ fun WePrayApkCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
                 )
-                
+
                 if (version != null) {
                     WePrayBadge(
                         text = version,
@@ -174,7 +174,7 @@ fun WePrayApkCard(
                     )
                 }
             }
-            
+
             Text(
                 text = when {
                     isError && errorMessage != null -> errorMessage
@@ -191,24 +191,14 @@ fun WePrayApkCard(
                 }
             )
         }
-        
+
         // Actions
-        AnimatedVisibility(
-            visible = isHovered && !isInstalling,
-            enter = fadeIn(animationSpec = tween(WePrayTheme.animation.DEFAULT)) +
-                    expandVertically(animationSpec = tween(WePrayTheme.animation.DEFAULT)),
-            exit = fadeOut(animationSpec = tween(WePrayTheme.animation.FAST)) +
-                    shrinkVertically(animationSpec = tween(WePrayTheme.animation.FAST))
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm)
-            ) {
-                WePrayPrimaryButton(
-                    text = "Install",
-                    onClick = onInstallClick,
-                    size = ButtonSize.Small
-                )
-            }
+        if (isHovered && !isInstalling) {
+            WePrayPrimaryButton(
+                text = "Install",
+                onClick = onInstallClick,
+                size = ButtonSize.Default
+            )
         }
     }
 }
@@ -231,7 +221,7 @@ fun WePrayDeviceCard(
     icon: ImageVector = Icons.Outlined.Smartphone,
     onCardClick: () -> Unit = {},
     onMirroringClick: () -> Unit = {},
-    onScreenshotClick: () -> Unit = {}
+    onScreenshotClick: () -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
@@ -401,7 +391,7 @@ private fun CardPreview() {
                     style = WePrayTheme.typography.headlineLarge,
                     color = WePrayTheme.colors.onBackground
                 )
-                
+
                 WePrayCard(
                     onClick = { println("Card clicked") }
                 ) {
@@ -420,7 +410,7 @@ private fun CardPreview() {
                     )
                 }
             }
-            
+
             // APK Cards
             Column(
                 verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
@@ -430,7 +420,7 @@ private fun CardPreview() {
                     style = WePrayTheme.typography.headlineLarge,
                     color = WePrayTheme.colors.onBackground
                 )
-                
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -445,27 +435,36 @@ private fun CardPreview() {
                         modifiedTime = "2 mins ago",
                         onInstallClick = { println("Install") }
                     )
-                    
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WePrayTheme.colors.border))
-                    
+
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(1.dp)
+                            .background(WePrayTheme.colors.border)
+                    )
+
                     WePrayApkCard(
                         fileName = "app-debug-unsigned.apk",
                         version = "v1.0.4-beta",
                         modifiedTime = "5 mins ago",
                         isInstalling = true
                     )
-                    
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WePrayTheme.colors.border))
-                    
+
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(1.dp)
+                            .background(WePrayTheme.colors.border)
+                    )
+
                     WePrayApkCard(
                         fileName = "spotify-lite.apk",
                         version = "v8.8.0",
                         modifiedTime = "1 hour ago",
                         isInstalled = true
                     )
-                    
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(WePrayTheme.colors.border))
-                    
+
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(1.dp)
+                            .background(WePrayTheme.colors.border)
+                    )
+
                     WePrayApkCard(
                         fileName = "corrupt-build.apk",
                         version = null,
@@ -475,7 +474,7 @@ private fun CardPreview() {
                     )
                 }
             }
-            
+
             // Device Cards
             Column(
                 verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
@@ -485,7 +484,7 @@ private fun CardPreview() {
                     style = WePrayTheme.typography.headlineLarge,
                     color = WePrayTheme.colors.onBackground
                 )
-                
+
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xl)
                 ) {
@@ -499,7 +498,7 @@ private fun CardPreview() {
                         isSelected = true,
                         icon = Icons.Outlined.Smartphone
                     )
-                    
+
                     WePrayDeviceCard(
                         deviceModel = "Pixel 8 Pro",
                         deviceManufacturer = "Google",

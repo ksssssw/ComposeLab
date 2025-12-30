@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ksssssw.wepray.domain.model.Device
 import com.ksssssw.wepray.domain.repository.DeviceRepository
+import com.ksssssw.wepray.domain.repository.SettingsRepository
 import com.ksssssw.wepray.domain.usecase.RefreshDevicesUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -18,23 +21,32 @@ import kotlinx.coroutines.launch
  * Repository의 Flow를 구독하여 앱 전역 상태를 관리합니다:
  * - 디바이스 목록 (Repository 캐시)
  * - 현재 선택된 디바이스
+ * - 마지막 선택한 탭
  *
  * Repository가 Single Source of Truth이며,
  * 이 ViewModel은 Repository의 상태를 UI에 노출하고
  * 디바이스 새로고침 등의 비즈니스 로직을 처리합니다.
  *
  * @property deviceRepository 디바이스 Repository
- * @property getDevicesUseCase 디바이스 목록 조회 UseCase
+ * @property settingsRepository 설정 Repository
+ * @property refreshDevicesUseCase 디바이스 목록 조회 UseCase
  */
 class WePrayAppViewModel(
     private val deviceRepository: DeviceRepository,
+    private val settingsRepository: SettingsRepository,
     private val refreshDevicesUseCase: RefreshDevicesUseCase,
 ) : ViewModel() {
 
     init {
         // 앱 시작 시 디바이스 목록 로드
         refreshDevices()
+        // 마지막 선택한 탭 로드
+        loadLastSelectedTab()
     }
+    
+    // 마지막 선택한 탭
+    private val _lastSelectedTab = MutableStateFlow<String?>(null)
+    val lastSelectedTab: StateFlow<String?> = _lastSelectedTab.asStateFlow()
 
     // Repository의 디바이스 목록과 선택된 디바이스를 함께 구독
     val appState: StateFlow<WePrayAppUiState> = combine(
@@ -70,6 +82,28 @@ class WePrayAppViewModel(
     fun refreshDevices() {
         viewModelScope.launch {
             refreshDevicesUseCase()
+        }
+    }
+    
+    /**
+     * 마지막으로 선택한 탭을 로드합니다.
+     */
+    private fun loadLastSelectedTab() {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettings()
+            _lastSelectedTab.value = settings.lastSelectedTab
+            println("✅ 마지막 선택한 탭 로드됨: ${settings.lastSelectedTab}")
+        }
+    }
+    
+    /**
+     * 선택한 탭을 저장합니다.
+     */
+    fun saveSelectedTab(tab: String) {
+        viewModelScope.launch {
+            settingsRepository.updateLastSelectedTab(tab)
+            _lastSelectedTab.value = tab
+            println("✅ 선택한 탭 저장됨: $tab")
         }
     }
 }

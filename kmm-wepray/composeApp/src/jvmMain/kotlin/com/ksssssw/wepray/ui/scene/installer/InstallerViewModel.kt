@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ksssssw.wepray.domain.model.Device
 import com.ksssssw.wepray.domain.model.DeviceStorageInfo
 import com.ksssssw.wepray.domain.repository.DeviceRepository
+import com.ksssssw.wepray.domain.repository.SettingsRepository
 import com.ksssssw.wepray.domain.usecase.InstallApkUseCase
 import com.ksssssw.wepray.domain.usecase.SelectApkFolderUseCase
 import kotlinx.coroutines.Dispatchers
@@ -24,19 +25,26 @@ import java.util.*
  * NowInAndroid 스타일의 아키텍처 패턴을 따릅니다.
  * 
  * - StateFlow로 UI 상태 관리
- * - Single source of truth (DeviceRepository)
+ * - Single source of truth (DeviceRepository, SettingsRepository)
  * - Unidirectional data flow
  * - 관련 상태를 그룹화하여 관리
  * 
  * @property deviceRepository 디바이스 Repository (Single Source of Truth)
+ * @property settingsRepository 설정 Repository (Single Source of Truth)
  * @property selectApkFolderUseCase 폴더 선택 UseCase
  * @property installApkUseCase APK 설치 UseCase
  */
 class InstallerViewModel(
     private val deviceRepository: DeviceRepository,
+    private val settingsRepository: SettingsRepository,
     private val selectApkFolderUseCase: SelectApkFolderUseCase,
     private val installApkUseCase: InstallApkUseCase
 ) : ViewModel() {
+    
+    init {
+        // 앱 시작 시 저장된 APK 폴더 경로 로드
+        loadSavedApkFolderPath()
+    }
     
     // ============================================
     // State from Repository (Single Source of Truth)
@@ -128,6 +136,22 @@ class InstallerViewModel(
     // ============================================
     
     /**
+     * 저장된 APK 폴더 경로를 로드합니다.
+     */
+    private fun loadSavedApkFolderPath() {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettings()
+            val savedPath = settings.apkFolderPath
+            
+            if (savedPath != null) {
+                _folderState.value = _folderState.value.copy(selectedPath = savedPath)
+                loadApkFiles(savedPath)
+                println("✅ 저장된 APK 폴더 경로 로드됨: $savedPath")
+            }
+        }
+    }
+    
+    /**
      * APK 폴더를 선택합니다.
      */
     fun selectApkFolder() {
@@ -144,6 +168,9 @@ class InstallerViewModel(
                     if (path != null) {
                         _folderState.value = _folderState.value.copy(selectedPath = path)
                         loadApkFiles(path)
+                        // 선택한 경로를 DB에 저장
+                        settingsRepository.updateApkFolderPath(path)
+                        println("✅ APK 폴더 경로 저장됨: $path")
                         FolderSelectionState.Success(path)
                     } else {
                         FolderSelectionState.Cancelled
