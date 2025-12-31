@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 /**
  * Installer 화면의 ViewModel
@@ -146,7 +147,6 @@ class InstallerViewModel(
             if (savedPath != null) {
                 _folderState.value = _folderState.value.copy(selectedPath = savedPath)
                 loadApkFiles(savedPath)
-                println("✅ 저장된 APK 폴더 경로 로드됨: $savedPath")
             }
         }
     }
@@ -170,7 +170,6 @@ class InstallerViewModel(
                         loadApkFiles(path)
                         // 선택한 경로를 DB에 저장
                         settingsRepository.updateApkFolderPath(path)
-                        println("✅ APK 폴더 경로 저장됨: $path")
                         FolderSelectionState.Success(path)
                     } else {
                         FolderSelectionState.Cancelled
@@ -189,6 +188,7 @@ class InstallerViewModel(
     
     /**
      * 지정된 폴더에서 APK 파일 목록을 로드합니다.
+     * 메모리 효율성을 위해 파일 정보를 한 번에 계산합니다.
      */
     private suspend fun loadApkFiles(folderPath: String) = withContext(Dispatchers.IO) {
         try {
@@ -198,24 +198,30 @@ class InstallerViewModel(
                 return@withContext
             }
             
+            // 파일 목록을 한 번에 필터링하고 매핑 (메모리 효율적)
             val apkFiles = folder.listFiles { file ->
                 file.isFile && file.extension.equals("apk", ignoreCase = true)
-            }?.map { file ->
-                ApkFileInfo(
-                    fileName = file.name,
-                    filePath = file.absolutePath,
-                    modifiedDate = formatDate(file.lastModified()),
-                    modifiedTimestamp = file.lastModified(),
-                    fileSize = formatFileSize(file.length()),
-                    fileSizeBytes = file.length()
-                )
+            }?.mapNotNull { file ->
+                try {
+                    val lastModified = file.lastModified()
+                    val fileLength = file.length()
+                    ApkFileInfo(
+                        fileName = file.name,
+                        filePath = file.absolutePath,
+                        modifiedDate = formatDate(lastModified),
+                        modifiedTimestamp = lastModified,
+                        fileSize = formatFileSize(fileLength),
+                        fileSizeBytes = fileLength
+                    )
+                } catch (e: Exception) {
+                    // 개별 파일 처리 실패는 무시하고 계속 진행
+                    null
+                }
             } ?: emptyList()
             
             _apkState.value = _apkState.value.copy(apkFiles = apkFiles)
-            println("✅ Loaded ${apkFiles.size} APK files from $folderPath")
             
         } catch (e: Exception) {
-            println("❌ Failed to load APK files: ${e.message}")
             _apkState.value = _apkState.value.copy(apkFiles = emptyList())
         }
     }
@@ -260,13 +266,7 @@ class InstallerViewModel(
         val apk = _apkState.value.selectedApk
         val device = selectedDevice.value
         
-        if (apk == null) {
-            println("❌ No APK file selected")
-            return
-        }
-        
-        if (device == null) {
-            println("❌ No device selected")
+        if (apk == null || device == null) {
             return
         }
         
@@ -280,7 +280,6 @@ class InstallerViewModel(
         val device = selectedDevice.value
         
         if (device == null) {
-            println("❌ No device selected")
             return
         }
         
@@ -294,7 +293,6 @@ class InstallerViewModel(
         val device = selectedDevice.value
         
         if (device == null) {
-            println("❌ No device selected")
             return
         }
         
@@ -360,23 +358,20 @@ class InstallerViewModel(
     // Utility Functions
     // ============================================
     
+    // SimpleDateFormat은 스레드 안전하지 않으므로 각 호출마다 새 인스턴스 생성
+    // 하지만 계산을 최적화하여 메모리 사용 감소
     /**
      * 타임스탬프를 포맷팅합니다.
      */
     private fun formatDate(timestamp: Long): String {
         val now = System.currentTimeMillis()
-        val diff = now - timestamp
-        
-        val seconds = diff / 1000
-        val minutes = seconds / 60
-        val hours = minutes / 60
-        val days = hours / 24
+        val diffMillis = now - timestamp
         
         return when {
-            seconds < 60 -> "방금 전"
-            minutes < 60 -> "${minutes}분 전"
-            hours < 24 -> "${hours}시간 전"
-            days < 7 -> "${days}일 전"
+            diffMillis < TimeUnit.MINUTES.toMillis(1) -> "방금 전"
+            diffMillis < TimeUnit.HOURS.toMillis(1) -> "${TimeUnit.MILLISECONDS.toMinutes(diffMillis)}분 전"
+            diffMillis < TimeUnit.DAYS.toMillis(1) -> "${TimeUnit.MILLISECONDS.toHours(diffMillis)}시간 전"
+            diffMillis < TimeUnit.DAYS.toMillis(7) -> "${TimeUnit.MILLISECONDS.toDays(diffMillis)}일 전"
             else -> {
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                 sdf.format(Date(timestamp))

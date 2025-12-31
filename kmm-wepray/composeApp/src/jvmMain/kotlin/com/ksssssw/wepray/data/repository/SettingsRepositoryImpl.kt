@@ -29,50 +29,36 @@ class SettingsRepositoryImpl(
     }
     
     override suspend fun updateScreenshotSavePath(path: String) {
-        val currentSettings = appSettingsDao.getSettingsOnce()
-        if (currentSettings == null) {
-            // 설정이 없으면 새로 생성
-            appSettingsDao.insertSettings(
-                AppSettingsEntity(
-                    id = 1,
-                    screenshotSavePath = path
-                )
-            )
-        } else {
-            // 기존 설정 업데이트
-            appSettingsDao.updateScreenshotSavePath(path)
-        }
+        // UPSERT 패턴: INSERT OR REPLACE 사용으로 쿼리 1회로 감소
+        ensureSettingsExists()
+        appSettingsDao.updateScreenshotSavePath(path)
     }
     
     override suspend fun updateApkFolderPath(path: String) {
-        val currentSettings = appSettingsDao.getSettingsOnce()
-        if (currentSettings == null) {
-            // 설정이 없으면 새로 생성
-            appSettingsDao.insertSettings(
-                AppSettingsEntity(
-                    id = 1,
-                    apkFolderPath = path
-                )
-            )
-        } else {
-            // 기존 설정 업데이트
-            appSettingsDao.updateApkFolderPath(path)
-        }
+        // UPSERT 패턴: INSERT OR REPLACE 사용으로 쿼리 1회로 감소
+        ensureSettingsExists()
+        appSettingsDao.updateApkFolderPath(path)
     }
     
     override suspend fun updateLastSelectedTab(tab: String) {
-        val currentSettings = appSettingsDao.getSettingsOnce()
-        if (currentSettings == null) {
-            // 설정이 없으면 새로 생성
-            appSettingsDao.insertSettings(
-                AppSettingsEntity(
-                    id = 1,
-                    lastSelectedTab = tab
-                )
-            )
-        } else {
-            // 기존 설정 업데이트
-            appSettingsDao.updateLastSelectedTab(tab)
+        // UPSERT 패턴: INSERT OR REPLACE 사용으로 쿼리 1회로 감소
+        ensureSettingsExists()
+        appSettingsDao.updateLastSelectedTab(tab)
+    }
+    
+    /**
+     * 설정 레코드가 존재하는지 확인하고 없으면 생성
+     * 앱 실행 시 한 번만 호출되도록 최적화
+     */
+    private var settingsInitialized = false
+    
+    private suspend fun ensureSettingsExists() {
+        if (!settingsInitialized) {
+            val exists = appSettingsDao.getSettingsOnce() != null
+            if (!exists) {
+                appSettingsDao.insertSettings(AppSettingsEntity(id = 1))
+            }
+            settingsInitialized = true
         }
     }
     

@@ -29,8 +29,6 @@ class InstallApkUseCase(
         reinstall: Boolean = true
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            println("📦 Installing APK: $apkPath to ${device.modelName} (${device.serialNumber})")
-            
             // APK 파일 존재 확인
             val apkFile = java.io.File(apkPath)
             if (!apkFile.exists()) {
@@ -59,7 +57,6 @@ class InstallApkUseCase(
                 
                 // 설치 성공 확인 (adb install 출력에 "Success" 포함)
                 if (output.contains("Success", ignoreCase = true)) {
-                    println("✅ APK installed successfully")
                     Result.success(true)
                 } else {
                     // 실패 메시지 파싱
@@ -75,18 +72,14 @@ class InstallApkUseCase(
                         else ->
                             "APK 설치에 실패했습니다: $output"
                     }
-                    println("❌ $errorMsg")
                     Result.failure(Exception(errorMsg))
                 }
             } else {
                 val error = result.exceptionOrNull()
-                println("❌ APK installation failed: ${error?.message}")
                 Result.failure(error ?: Exception("APK 설치에 실패했습니다"))
             }
             
         } catch (e: Exception) {
-            println("❌ Exception during APK installation: ${e.message}")
-            e.printStackTrace()
             Result.failure(e)
         }
     }

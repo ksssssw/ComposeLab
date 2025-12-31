@@ -26,8 +26,6 @@ class GetDeviceStorageUseCase(
      */
     suspend operator fun invoke(device: Device): Result<DeviceStorageInfo> = withContext(Dispatchers.IO) {
         try {
-            println("📊 Getting storage info for device: ${device.serialNumber}")
-
             // df 명령으로 /data 파티션 정보 조회
             val result = adbManager.executeCommand(
                 AdbCommand.ExecuteShell(
@@ -38,22 +36,15 @@ class GetDeviceStorageUseCase(
 
             if (result.isFailure) {
                 val errorMsg = "스토리지 정보 조회 실패: ${result.exceptionOrNull()?.message}"
-                println("❌ $errorMsg")
                 return@withContext Result.failure(Exception(errorMsg))
             }
 
             val output = result.getOrNull() ?: ""
-            println("📄 df output:\n$output")
-            
             val storageInfo = parseStorageInfo(output)
-
-            println("✅ Storage info retrieved: ${storageInfo.usedGB}GB / ${storageInfo.totalGB}GB used (${storageInfo.usedPercentage}%)")
 
             Result.success(storageInfo)
 
         } catch (e: Exception) {
-            println("❌ Failed to get storage info: ${e.message}")
-            e.printStackTrace()
             Result.failure(e)
         }
     }
@@ -69,26 +60,18 @@ class GetDeviceStorageUseCase(
      */
     private fun parseStorageInfo(output: String): DeviceStorageInfo {
         try {
-            println("🔍 Parsing storage info from output...")
-            
             // 라인별로 분리
             val lines = output.trim().split("\n")
-            println("📝 Total lines: ${lines.size}")
             
             // 두 번째 라인(데이터 라인) 파싱
             if (lines.size < 2) {
-                println("⚠️ Not enough lines in output, using default")
                 return createDefaultStorageInfo()
             }
 
             val dataLine = lines[1].trim()
-            println("📊 Data line: $dataLine")
-            
             val parts = dataLine.split(Regex("\\s+"))
-            println("📋 Parts count: ${parts.size}, parts: ${parts.joinToString(", ")}")
 
             if (parts.size < 6) {
-                println("⚠️ Not enough parts in data line, using default")
                 return createDefaultStorageInfo()
             }
 
@@ -96,8 +79,6 @@ class GetDeviceStorageUseCase(
             val totalKB = parts[1].toLongOrNull() ?: 0L
             val usedKB = parts[2].toLongOrNull() ?: 0L
             val availableKB = parts[3].toLongOrNull() ?: 0L
-            
-            println("💾 Raw KB values - Total: $totalKB, Used: $usedKB, Available: $availableKB")
 
             // KB를 GB로 변환
             val totalGB = totalKB / 1024.0 / 1024.0
@@ -117,8 +98,6 @@ class GetDeviceStorageUseCase(
             val mediaPercentage = (usedPercentage * 0.10).toFloat() / 100f
             val systemPercentage = (usedPercentage * 0.10).toFloat() / 100f
 
-            println("✅ Parsed successfully - ${usedPercentage}% used")
-
             return DeviceStorageInfo(
                 totalGB = totalGB,
                 usedGB = usedGB,
@@ -130,8 +109,6 @@ class GetDeviceStorageUseCase(
             )
 
         } catch (e: Exception) {
-            println("⚠️ Failed to parse storage info: ${e.message}")
-            e.printStackTrace()
             return createDefaultStorageInfo()
         }
     }

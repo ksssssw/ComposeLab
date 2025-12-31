@@ -59,6 +59,16 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.ksssssw.wepray.MainKt"
+        
+        // JVM 메모리 최적화 설정
+        jvmArgs += listOf(
+            "-Xms128m",                      // 초기 힙 크기 128MB
+            "-Xmx512m",                      // 최대 힙 크기 512MB
+            "-XX:+UseG1GC",                  // G1 가비지 컬렉터 사용
+            "-XX:MaxGCPauseMillis=200",      // GC 일시정지 최대 200ms
+            "-XX:+UseStringDeduplication",   // 문자열 중복 제거
+            "-Dsun.java2d.opengl=true"       // OpenGL 하드웨어 가속 활성화
+        )
 
         nativeDistributions {
             val appName = "WePray"

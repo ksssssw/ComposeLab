@@ -58,8 +58,6 @@ class AdbManager {
             throw IllegalStateException("Failed to set execute permission for ADB")
         }
         
-        println("✅ ADB initialized at: ${adbFile.absolutePath}")
-        
         return adbFile.absolutePath
     }
     
@@ -70,14 +68,18 @@ class AdbManager {
      * @return 명령 실행 결과
      */
     suspend fun executeCommand(command: AdbCommand): Result<String> = withContext(Dispatchers.IO) {
+        var process: Process? = null
         try {
             val commandString = command.toCommandString()
-            println("🔧 Executing ADB command: adb $commandString")
+            // 로그 출력 빈도 감소 (메모리 절약)
+            if (System.getProperty("wepray.debug") == "true") {
+                println("🔧 Executing ADB command: adb $commandString")
+            }
             
             val processBuilder = ProcessBuilder(adbPath, *commandString.split(" ").toTypedArray())
             processBuilder.redirectErrorStream(true)
             
-            val process = processBuilder.start()
+            process = processBuilder.start()
             
             val output = BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
                 reader.readText()
@@ -86,16 +88,29 @@ class AdbManager {
             val exitCode = process.waitFor()
             
             if (exitCode == 0) {
-                println("✅ ADB command succeeded")
                 Result.success(output)
             } else {
-                val errorMsg = "ADB command failed with exit code: $exitCode\nOutput: $output"
-                println("❌ $errorMsg")
+                val errorMsg = "ADB command failed with exit code: $exitCode"
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            println("❌ ADB command exception: ${e.message}")
             Result.failure(e)
+        } finally {
+            // 프로세스 리소스 완전히 정리
+            process?.let {
+                try {
+                    it.inputStream.close()
+                    it.outputStream.close()
+                    it.errorStream.close()
+                    it.destroy()
+                    // 강제 종료 대기 (최대 1초)
+                    if (!it.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)) {
+                        it.destroyForcibly()
+                    }
+                } catch (e: Exception) {
+                    // 정리 중 예외는 무시 (이미 종료된 경우)
+                }
+            }
         }
     }
     
@@ -119,7 +134,7 @@ class AdbManager {
                     devices.add(device)
                 }
             } catch (e: Exception) {
-                println("⚠️ Failed to parse device line: $line - ${e.message}")
+                // 파싱 실패한 라인은 무시
             }
         }
         

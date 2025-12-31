@@ -92,7 +92,6 @@ class WePrayAppViewModel(
         viewModelScope.launch {
             val settings = settingsRepository.getSettings()
             _lastSelectedTab.value = settings.lastSelectedTab
-            println("✅ 마지막 선택한 탭 로드됨: ${settings.lastSelectedTab}")
         }
     }
     
@@ -103,7 +102,6 @@ class WePrayAppViewModel(
         viewModelScope.launch {
             settingsRepository.updateLastSelectedTab(tab)
             _lastSelectedTab.value = tab
-            println("✅ 선택한 탭 저장됨: $tab")
         }
     }
 }

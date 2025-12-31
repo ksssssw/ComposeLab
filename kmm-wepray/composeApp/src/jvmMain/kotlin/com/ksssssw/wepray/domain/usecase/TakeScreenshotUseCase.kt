@@ -43,8 +43,6 @@ class TakeScreenshotUseCase(
 
             // 저장 경로가 없거나 유효하지 않으면 선택 요청
             if (savePath == null || !File(savePath).exists()) {
-                println("📂 No screenshot path configured, requesting selection...")
-
                 val selectionResult = selectScreenshotPathUseCase()
                 if (selectionResult.isFailure) {
                     return@withContext Result.failure(
@@ -56,7 +54,6 @@ class TakeScreenshotUseCase(
 
                 // 사용자가 경로 선택을 취소한 경우
                 if (savePath == null) {
-                    println("ℹ️ User cancelled path selection")
                     return@withContext Result.success(null)
                 }
             }
@@ -75,8 +72,6 @@ class TakeScreenshotUseCase(
             // 디바이스 내부 임시 경로
             val devicePath = "/sdcard/wepray_temp_screenshot.png"
 
-            println("📸 Taking screenshot for device: ${device.serialNumber}")
-
             // 4. 디바이스에서 스크린샷 촬영
             val screenshotResult = adbManager.executeCommand(
                 AdbCommand.TakeScreenshot(
@@ -90,8 +85,6 @@ class TakeScreenshotUseCase(
                     Exception("스크린샷 촬영 실패: ${screenshotResult.exceptionOrNull()?.message}")
                 )
             }
-
-            println("✅ Screenshot captured on device")
 
             // 5. PC로 파일 복사
             val pullResult = adbManager.executeCommand(
@@ -111,8 +104,6 @@ class TakeScreenshotUseCase(
                 )
             }
 
-            println("✅ Screenshot saved to: $localFilePath")
-
             // 6. 디바이스에서 임시 파일 삭제
             cleanupDeviceFile(device.serialNumber, devicePath)
 
@@ -127,7 +118,6 @@ class TakeScreenshotUseCase(
             Result.success(localFilePath)
 
         } catch (e: Exception) {
-            println("❌ Screenshot failed: ${e.message}")
             Result.failure(e)
         }
     }
@@ -143,9 +133,8 @@ class TakeScreenshotUseCase(
                     shellCommand = "rm $devicePath"
                 )
             )
-            println("🧹 Cleaned up temporary file on device")
         } catch (e: Exception) {
-            println("⚠️ Failed to cleanup temporary file: ${e.message}")
+            // 정리 실패는 무시
         }
     }
 }
