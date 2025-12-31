@@ -1,29 +1,34 @@
 package com.ksssssw.wepray.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,9 +89,11 @@ fun WePrayCard(
 @Composable
 fun WePrayApkCard(
     fileName: String,
+    packageName: String,
     version: String? = null,
     modifiedTime: String,
     modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
     isInstalling: Boolean = false,
     isInstalled: Boolean = false,
     isError: Boolean = false,
@@ -111,16 +118,29 @@ fun WePrayApkCard(
         else -> Icons.Outlined.Android
     }
 
+    // 배경색 결정
+    val backgroundColor = when {
+        isSelected -> WePrayTheme.colors.primary.copy(alpha = 0.08f)
+        isHovered -> WePrayTheme.colors.surfaceElevated
+        else -> Color.Transparent
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(WePrayTheme.shapes.default)
-            .background(
-                if (isHovered)
-                    WePrayTheme.colors.surfaceElevated
-                else
-                    Color.Transparent
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = WePrayTheme.colors.primary.copy(alpha = 0.5f),
+                        shape = WePrayTheme.shapes.default
+                    )
+                } else {
+                    Modifier
+                }
             )
+            .background(backgroundColor)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -175,15 +195,20 @@ fun WePrayApkCard(
                 }
             }
 
-            Text(
-                text = when {
+            ApkInfoText(
+                label = "Package Name: ",
+                description = packageName
+            )
+
+            ApkInfoText(
+                label = "Modified: ",
+                description = when {
                     isError && errorMessage != null -> errorMessage
                     isInstalling -> "Installing..."
                     isInstalled -> "Installed successfully"
-                    else -> "Modified: $modifiedTime"
+                    else -> "$modifiedTime"
                 },
-                style = WePrayTheme.typography.bodySmall,
-                color = when {
+                descriptionColor = when {
                     isError -> WePrayTheme.colors.error
                     isInstalling -> WePrayTheme.colors.primary
                     isInstalled -> WePrayTheme.colors.success
@@ -193,13 +218,38 @@ fun WePrayApkCard(
         }
 
         // Actions
-        if (isHovered && !isInstalling) {
+        if (isSelected || (isHovered && !isInstalling)) {
             WePrayPrimaryButton(
                 text = "Install",
                 onClick = onInstallClick,
                 size = ButtonSize.Default
             )
         }
+    }
+}
+
+@Composable
+private fun ApkInfoText(
+    modifier: Modifier = Modifier,
+    label: String,
+    description: String,
+    descriptionColor: Color = WePrayTheme.colors.textSecondary,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+    ) {
+        Text(
+            text = label,
+            style = WePrayTheme.typography.bodySmall,
+            color = WePrayTheme.colors.textDisabled
+        )
+
+        Text(
+            text = description,
+            style = WePrayTheme.typography.bodySmall,
+            color = descriptionColor
+        )
     }
 }
 
@@ -270,7 +320,7 @@ fun WePrayDeviceCard(
                     imageVector = icon,
                     contentDescription = "Device Icon",
                     modifier = Modifier.size(32.dp),
-                    tint = androidx.compose.ui.graphics.Color.White
+                    tint = Color.White
                 )
             }
 
@@ -431,6 +481,7 @@ private fun CardPreview() {
                 ) {
                     WePrayApkCard(
                         fileName = "com.instagram.android.apk",
+                        packageName = "com.xxx.xxxx.xxxxx",
                         version = "v294.0.0",
                         modifiedTime = "2 mins ago",
                         onInstallClick = { println("Install") }
@@ -443,6 +494,7 @@ private fun CardPreview() {
 
                     WePrayApkCard(
                         fileName = "app-debug-unsigned.apk",
+                        packageName = "com.xxx.xxxx.xxxxx",
                         version = "v1.0.4-beta",
                         modifiedTime = "5 mins ago",
                         isInstalling = true
@@ -455,6 +507,7 @@ private fun CardPreview() {
 
                     WePrayApkCard(
                         fileName = "spotify-lite.apk",
+                        packageName = "com.xxx.xxxx.xxxxx",
                         version = "v8.8.0",
                         modifiedTime = "1 hour ago",
                         isInstalled = true
@@ -467,6 +520,7 @@ private fun CardPreview() {
 
                     WePrayApkCard(
                         fileName = "corrupt-build.apk",
+                        packageName = "com.xxx.xxxx.xxxxx",
                         version = null,
                         modifiedTime = "Yesterday",
                         isError = true,

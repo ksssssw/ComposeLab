@@ -6,6 +6,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import com.ksssssw.wepray.WePrayAppViewModel
+import com.ksssssw.wepray.data.aapt.AaptManager
 import com.ksssssw.wepray.data.adb.AdbManager
 import com.ksssssw.wepray.data.local.WePrayDatabase
 import com.ksssssw.wepray.data.repository.DeviceRepositoryImpl
@@ -70,6 +71,9 @@ val dataModule = module {
     
     // AdbManager - Singleton
     singleOf(::AdbManager)
+    
+    // AaptManager - Singleton
+    singleOf(::AaptManager)
     
     // Repositories
     single<DeviceRepository> {

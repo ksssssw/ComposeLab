@@ -1,6 +1,7 @@
 package com.ksssssw.wepray.ui.scene.installer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.FolderOff
 import androidx.compose.material.icons.outlined.FolderOpen
@@ -30,10 +32,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,12 +44,13 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.ksssssw.wepray.domain.model.Device
 import com.ksssssw.wepray.domain.model.DeviceStorageInfo
+import com.ksssssw.wepray.ui.components.BadgeVariant
 import com.ksssssw.wepray.ui.components.ButtonSize
 import com.ksssssw.wepray.ui.components.IconButtonSize
 import com.ksssssw.wepray.ui.components.ProgressSegment
 import com.ksssssw.wepray.ui.components.WePrayApkCard
+import com.ksssssw.wepray.ui.components.WePrayBadge
 import com.ksssssw.wepray.ui.components.WePrayCard
-import com.ksssssw.wepray.ui.components.WePrayDragDropZone
 import com.ksssssw.wepray.ui.components.WePrayDropdown
 import com.ksssssw.wepray.ui.components.WePrayIconButton
 import com.ksssssw.wepray.ui.components.WePrayLabeledTextField
@@ -71,11 +75,12 @@ fun InstallerScene(
     viewModel: InstallerViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+
     when (val state = uiState) {
         is InstallerUiState.Loading -> {
             LoadingState()
         }
+
         is InstallerUiState.Success -> {
             // 폴더 선택 결과 처리
             LaunchedEffect(state.folderSelectionState) {
@@ -84,18 +89,22 @@ fun InstallerScene(
                         println("✅ 폴더 선택됨: ${(state.folderSelectionState as FolderSelectionState.Success).path}")
                         viewModel.resetFolderSelectionState()
                     }
+
                     is FolderSelectionState.Cancelled -> {
                         println("ℹ️ 폴더 선택이 취소되었습니다")
                         viewModel.resetFolderSelectionState()
                     }
+
                     is FolderSelectionState.Error -> {
                         println("❌ 폴더 선택 실패: ${(state.folderSelectionState as FolderSelectionState.Error).message}")
                         viewModel.resetFolderSelectionState()
                     }
-                    else -> { /* Idle or Selecting */ }
+
+                    else -> { /* Idle or Selecting */
+                    }
                 }
             }
-            
+
             InstallerContent(
                 uiState = state,
                 onFilterTextChange = viewModel::updateFilterText,
@@ -111,8 +120,7 @@ fun InstallerScene(
                 onSelectFolder = viewModel::selectApkFolder,
                 onRefreshList = viewModel::refreshApkList,
                 onApkCardClick = viewModel::selectApkFile,
-                onInstallClick = viewModel::installApk,
-                onApkDrop = viewModel::installApkByPath
+                onInstallClick = viewModel::installApk
             )
         }
     }
@@ -139,7 +147,6 @@ private fun InstallerContent(
     onRefreshList: () -> Unit,
     onApkCardClick: (ApkFileInfo) -> Unit,
     onInstallClick: (ApkFileInfo) -> Unit,
-    onApkDrop: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -208,9 +215,9 @@ private fun InstallerContent(
                     deviceStorageInfo = uiState.deviceStorageInfo
                 )
 
-                // Drag & Drop Zone
-                DragDropZoneSection(
-                    onApkDrop = onApkDrop,
+                // APK 상세 정보 섹션
+                ApkDetailSection(
+                    selectedApkFile = uiState.selectedApkFile,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -290,7 +297,7 @@ private fun SearchAndFiltersSection(
             modifier = Modifier.weight(1f)
         )
 
-        // 정렬 드롭다운
+        // 정렬
         WePrayDropdown(
             value = sortOption,
             onValueChange = onSortOptionChange,
@@ -326,14 +333,14 @@ private fun ApkFileListSection(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    
+
     // 필터나 정렬 옵션이 변경되면 스크롤을 최상단으로 이동
     LaunchedEffect(filterText, sortOption) {
         if (apkFiles.isNotEmpty()) {
             listState.scrollToItem(0)
         }
     }
-    
+
     WePrayCard(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -350,7 +357,7 @@ private fun ApkFileListSection(
                 LazyColumn(state = listState) {
                     items(apkFiles, key = { it.filePath }) { apkFile ->
                         val installStatus = installStates[apkFile.filePath]
-                        
+
                         ApkListItem(
                             apkFile = apkFile,
                             isSelected = apkFile == selectedApkFile,
@@ -377,11 +384,13 @@ private fun ApkListItem(
     val isInstalled = installStatus is InstallStatus.Installed
     val isError = installStatus is InstallStatus.Error
     val errorMessage = (installStatus as? InstallStatus.Error)?.message
-    
+
     WePrayApkCard(
         fileName = apkFile.fileName,
-        version = null,
+        packageName = apkFile.packageName ?: "N/A",
+        version = apkFile.versionName,
         modifiedTime = apkFile.modifiedDate,
+        isSelected = isSelected,
         isInstalling = isInstalling,
         isInstalled = isInstalled,
         isError = isError,
@@ -394,7 +403,7 @@ private fun ApkListItem(
 
 @Composable
 private fun EmptyApkListState(
-    selectedDevice: com.ksssssw.wepray.domain.model.Device?,
+    selectedDevice: Device?,
 ) {
     Box(
         modifier = Modifier
@@ -474,8 +483,8 @@ private fun StatsCardsSection(
 
 @Composable
 private fun StatsCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconTint: androidx.compose.ui.graphics.Color,
+    icon: ImageVector,
+    iconTint: Color,
     label: String,
     value: String,
     modifier: Modifier = Modifier,
@@ -600,9 +609,21 @@ private fun DeviceStorageCard(
                         // 멀티 프로그레스 바
                         WePrayMultiProgressBar(
                             segments = listOf(
-                                ProgressSegment(deviceStorageInfo.appsPercentage, WePrayTheme.colors.primary, "Apps"),
-                                ProgressSegment(deviceStorageInfo.mediaPercentage, WePrayTheme.colors.accentPurple, "Media"),
-                                ProgressSegment(deviceStorageInfo.systemPercentage, WePrayTheme.colors.success, "System")
+                                ProgressSegment(
+                                    deviceStorageInfo.appsPercentage,
+                                    WePrayTheme.colors.primary,
+                                    "Apps"
+                                ),
+                                ProgressSegment(
+                                    deviceStorageInfo.mediaPercentage,
+                                    WePrayTheme.colors.accentPurple,
+                                    "Media"
+                                ),
+                                ProgressSegment(
+                                    deviceStorageInfo.systemPercentage,
+                                    WePrayTheme.colors.success,
+                                    "System"
+                                )
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -694,21 +715,230 @@ private fun StorageLegendItem(
 }
 
 // ============================================
-// Drag & Drop Zone 섹션
+// APK 상세 정보 섹션
 // ============================================
-
 @Composable
-private fun DragDropZoneSection(
-    onApkDrop: (String) -> Unit,
+private fun ApkDetailSection(
+    selectedApkFile: ApkFileInfo?,
     modifier: Modifier = Modifier,
 ) {
-    WePrayDragDropZone(
-        onFilesDropped = { files ->
-            // 여러 파일이 드롭되면 첫 번째 파일만 처리
-            files.firstOrNull()?.let { onApkDrop(it) }
-        },
-        title = "Drop APKs here",
-        subtitle = "or click to browse files",
+    WePrayCard(
         modifier = modifier.fillMaxWidth()
-    )
+    ) {
+        if (selectedApkFile != null) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+            ) {
+                // 헤더
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = WePrayTheme.spacing.md),
+                ) {
+                    Text(
+                        text = "Selected Apk Info",
+                        style = WePrayTheme.typography.headlineMedium,
+                        color = WePrayTheme.colors.onSurface
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.lg)
+                ) {
+                    // App Icon
+                    // selectedApkFile.iconPath에 경로가 있지만, APK 내부에서 추출해야 함
+                    Box(
+                        modifier = Modifier
+                            .size(45.dp)
+                            .clip(WePrayTheme.shapes.default)
+                            .background(WePrayTheme.colors.accentEmerald.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Android,
+                            contentDescription = "App Icon",
+                            modifier = Modifier.size(32.dp),
+                            tint = WePrayTheme.colors.accentEmerald
+                        )
+                    }
+
+                    Column(
+                        modifier = modifier,
+                        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+                    ) {
+                        // App Name & version
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedApkFile.appName ?: selectedApkFile.fileName,
+                                style = WePrayTheme.typography.bodyLarge,
+                                color = WePrayTheme.colors.onSurface
+                            )
+
+                            // App Version Name(Version Code)
+                            val versionText = buildString {
+                                append(selectedApkFile.versionName ?: "?.?.?")
+                                append("(")
+                                append(selectedApkFile.versionCode ?: "?")
+                                append(")")
+                            }
+                            WePrayBadge(
+                                text = versionText,
+                                variant = BadgeVariant.Neutral
+                            )
+                        }
+                        // App PackageName
+                        Text(
+                            text = selectedApkFile.packageName ?: "Unknown Package",
+                            style = WePrayTheme.typography.bodySmall,
+                            color = WePrayTheme.colors.textSecondary
+                        )
+                    }
+                }
+
+                // Signing Key
+                DetailInfoItem(
+                    label = "Signing Key"
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(WePrayTheme.shapes.input)
+                            .background(WePrayTheme.colors.surface)
+                            .border(
+                                width = 1.dp,
+                                color = WePrayTheme.colors.border,
+                                shape = WePrayTheme.shapes.input
+                            )
+                            .padding(WePrayTheme.spacing.md)
+                    ) {
+                        Text(
+                            text = selectedApkFile.signingKey ?: "Not available (requires apksigner)",
+                            style = WePrayTheme.typography.bodySmall,
+                            color = WePrayTheme.colors.textTertiary
+                        )
+                    }
+                }
+
+                // SDK Versions
+                DetailInfoItem(
+                    label = "SDK Versions"
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = WePrayTheme.spacing.xl),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        SdkVersionChip(
+                            label = "Min",
+                            value = selectedApkFile.minSdkVersion ?: "?"
+                        )
+                        SdkVersionChip(
+                            label = "Target",
+                            value = selectedApkFile.targetSdkVersion ?: "?"
+                        )
+                        SdkVersionChip(
+                            label = "Compile",
+                            value = selectedApkFile.compileSdkVersion ?: "?"
+                        )
+                    }
+                }
+            }
+        } else {
+            // APK가 선택되지 않은 상태
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(WePrayTheme.spacing.xxl),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(WePrayTheme.colors.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Apps,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = WePrayTheme.colors.textDisabled
+                        )
+                    }
+
+                    Text(
+                        text = "No APK Selected",
+                        style = WePrayTheme.typography.headlineLarge,
+                        color = WePrayTheme.colors.onSurface
+                    )
+
+                    Text(
+                        text = "Select an APK from the list\nto view its details",
+                        style = WePrayTheme.typography.bodyMedium,
+                        color = WePrayTheme.colors.textSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
 }
+
+@Composable
+private fun DetailInfoItem(
+    modifier: Modifier = Modifier,
+    label: String,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
+    ) {
+        Text(
+            text = label,
+            style = WePrayTheme.typography.bodyMedium,
+            color = WePrayTheme.colors.textSecondary
+        )
+
+        content()
+    }
+}
+
+@Composable
+private fun SdkVersionChip(
+    label: String,
+    value: String,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(WePrayTheme.shapes.small)
+                .background(WePrayTheme.colors.surfaceVariant)
+                .padding(horizontal = WePrayTheme.spacing.md, vertical = WePrayTheme.spacing.xs),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = value,
+                style = WePrayTheme.typography.bodyLarge,
+                color = WePrayTheme.colors.textTertiary
+            )
+        }
+        Text(
+            text = label,
+            style = WePrayTheme.typography.labelSmall,
+            color = WePrayTheme.colors.textDisabled
+        )
+    }
+}
+

@@ -2,6 +2,7 @@ package com.ksssssw.wepray.ui.scene.installer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ksssssw.wepray.data.aapt.AaptManager
 import com.ksssssw.wepray.domain.model.Device
 import com.ksssssw.wepray.domain.model.DeviceStorageInfo
 import com.ksssssw.wepray.domain.repository.DeviceRepository
@@ -34,12 +35,14 @@ import java.util.concurrent.TimeUnit
  * @property settingsRepository 설정 Repository (Single Source of Truth)
  * @property selectApkFolderUseCase 폴더 선택 UseCase
  * @property installApkUseCase APK 설치 UseCase
+ * @property aaptManager AAPT 매니저 (APK 정보 추출)
  */
 class InstallerViewModel(
     private val deviceRepository: DeviceRepository,
     private val settingsRepository: SettingsRepository,
     private val selectApkFolderUseCase: SelectApkFolderUseCase,
-    private val installApkUseCase: InstallApkUseCase
+    private val installApkUseCase: InstallApkUseCase,
+    private val aaptManager: AaptManager
 ) : ViewModel() {
     
     init {
@@ -188,7 +191,9 @@ class InstallerViewModel(
     
     /**
      * 지정된 폴더에서 APK 파일 목록을 로드합니다.
-     * 메모리 효율성을 위해 파일 정보를 한 번에 계산합니다.
+     * 2단계 로딩으로 성능 최적화:
+     * 1. 빠른 로딩: 파일 정보만 먼저 로드
+     * 2. 상세 정보: 백그라운드에서 AAPT로 추출
      */
     private suspend fun loadApkFiles(folderPath: String) = withContext(Dispatchers.IO) {
         try {
@@ -198,13 +203,16 @@ class InstallerViewModel(
                 return@withContext
             }
             
-            // 파일 목록을 한 번에 필터링하고 매핑 (메모리 효율적)
-            val apkFiles = folder.listFiles { file ->
+            val files = folder.listFiles { file ->
                 file.isFile && file.extension.equals("apk", ignoreCase = true)
-            }?.mapNotNull { file ->
+            } ?: emptyArray()
+            
+            // 1단계: 파일 기본 정보만 먼저 로드 (빠름)
+            val basicApkFiles = files.mapNotNull { file ->
                 try {
                     val lastModified = file.lastModified()
                     val fileLength = file.length()
+                    
                     ApkFileInfo(
                         fileName = file.name,
                         filePath = file.absolutePath,
@@ -214,14 +222,53 @@ class InstallerViewModel(
                         fileSizeBytes = fileLength
                     )
                 } catch (e: Exception) {
-                    // 개별 파일 처리 실패는 무시하고 계속 진행
                     null
                 }
-            } ?: emptyList()
+            }
             
-            _apkState.value = _apkState.value.copy(apkFiles = apkFiles)
+            // 기본 정보를 먼저 UI에 표시
+            _apkState.value = _apkState.value.copy(apkFiles = basicApkFiles)
+            println("✅ Loaded ${basicApkFiles.size} APK files")
+            
+            // 2단계: 백그라운드에서 상세 정보 로드 (느림)
+            files.forEachIndexed { index, file ->
+                try {
+                    val apkInfo = aaptManager.extractApkInfo(file.absolutePath).getOrNull()
+                    
+                    // 해당 파일의 상세 정보 업데이트
+                    val currentFiles = _apkState.value.apkFiles
+                    val updatedFiles = currentFiles.map { apkFile ->
+                        if (apkFile.filePath == file.absolutePath) {
+                            apkFile.copy(
+                                appName = apkInfo?.appName,
+                                packageName = apkInfo?.packageName,
+                                iconPath = apkInfo?.iconPath,
+                                versionCode = apkInfo?.versionCode,
+                                versionName = apkInfo?.versionName,
+                                signingKey = apkInfo?.signingKey,
+                                minSdkVersion = apkInfo?.minSdkVersion,
+                                targetSdkVersion = apkInfo?.targetSdkVersion,
+                                compileSdkVersion = apkInfo?.compileSdkVersion
+                            )
+                        } else {
+                            apkFile
+                        }
+                    }
+                    
+                    _apkState.value = _apkState.value.copy(apkFiles = updatedFiles)
+                    
+                    // 진행상황을 10개 단위로만 출력 (성능 최적화)
+                    if ((index + 1) % 10 == 0 || (index + 1) == files.size) {
+                        println("  [${index + 1}/${files.size}] APK details loaded")
+                    }
+                    
+                } catch (e: Exception) {
+                    println("⚠️ Failed to parse: ${file.name}")
+                }
+            }
             
         } catch (e: Exception) {
+            println("❌ Failed to load APK files: ${e.message}")
             _apkState.value = _apkState.value.copy(apkFiles = emptyList())
         }
     }
@@ -475,7 +522,18 @@ data class ApkFileInfo(
     val modifiedDate: String,
     val modifiedTimestamp: Long,
     val fileSize: String,
-    val fileSizeBytes: Long
+    val fileSizeBytes: Long,
+    
+    // APK 상세 정보 (aapt로 추출)
+    val appName: String? = null,
+    val packageName: String? = null,
+    val iconPath: String? = null,
+    val versionCode: String? = null,
+    val versionName: String? = null,
+    val signingKey: String? = null,
+    val minSdkVersion: String? = null,
+    val targetSdkVersion: String? = null,
+    val compileSdkVersion: String? = null
 )
 
 /**
