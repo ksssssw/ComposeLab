@@ -103,8 +103,15 @@ class InstallerViewModel(
         // 필터링 및 정렬 적용
         val filteredAndSorted = apkState.apkFiles
             .filter { apkFile ->
-                if (filterSortState.filterText.isBlank()) true 
-                else apkFile.fileName.contains(filterSortState.filterText, ignoreCase = true) 
+                if (filterSortState.filterText.isBlank()) {
+                    true
+                } else {
+                    val searchText = filterSortState.filterText
+                    // fileName과 packageName 모두에서 검색 (OR 조건)
+                    // Short-circuit evaluation으로 최적화: fileName에서 먼저 찾고, 없으면 packageName 확인
+                    apkFile.fileName.contains(searchText, ignoreCase = true) ||
+                    apkFile.packageName?.contains(searchText, ignoreCase = true) == true
+                }
             }
             .let { files ->
                 when (filterSortState.sortOption) {
@@ -236,7 +243,13 @@ class InstallerViewModel(
                     val apkInfo = aaptManager.extractApkInfo(file.absolutePath).getOrNull()
                     
                     // 해당 파일의 상세 정보 업데이트
-                    val currentFiles = _apkState.value.apkFiles
+                    val currentState = _apkState.value
+                    val currentFiles = currentState.apkFiles
+                    val currentSelectedApk = currentState.selectedApk
+                    
+                    // 업데이트된 APK 정보
+                    var updatedApkInfo: ApkFileInfo? = null
+                    
                     val updatedFiles = currentFiles.map { apkFile ->
                         if (apkFile.filePath == file.absolutePath) {
                             apkFile.copy(
@@ -249,13 +262,23 @@ class InstallerViewModel(
                                 minSdkVersion = apkInfo?.minSdkVersion,
                                 targetSdkVersion = apkInfo?.targetSdkVersion,
                                 compileSdkVersion = apkInfo?.compileSdkVersion
-                            )
+                            ).also { updatedApkInfo = it }
                         } else {
                             apkFile
                         }
                     }
                     
-                    _apkState.value = _apkState.value.copy(apkFiles = updatedFiles)
+                    // 선택된 APK가 업데이트된 파일과 같다면 함께 업데이트
+                    val updatedSelectedApk = if (currentSelectedApk?.filePath == file.absolutePath) {
+                        updatedApkInfo
+                    } else {
+                        currentSelectedApk
+                    }
+                    
+                    _apkState.value = currentState.copy(
+                        apkFiles = updatedFiles,
+                        selectedApk = updatedSelectedApk
+                    )
                     
                     // 진행상황을 10개 단위로만 출력 (성능 최적화)
                     if ((index + 1) % 10 == 0 || (index + 1) == files.size) {

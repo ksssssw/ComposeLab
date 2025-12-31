@@ -156,7 +156,7 @@ fun WePrayApkCard(
         // Icon
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(50.dp)
                 .clip(WePrayTheme.shapes.default)
                 .background(iconColor.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
@@ -195,13 +195,20 @@ fun WePrayApkCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(2.dp))
+
             ApkInfoText(
                 label = "Package Name: ",
                 description = packageName
             )
 
             ApkInfoText(
-                label = "Modified: ",
+                label = when {
+                    isError && errorMessage != null -> "Message: "
+                    isInstalling -> "Message: "
+                    isInstalled -> "Message: "
+                    else -> "Modified: "
+                },
                 description = when {
                     isError && errorMessage != null -> errorMessage
                     isInstalling -> "Installing..."
@@ -242,13 +249,13 @@ private fun ApkInfoText(
         Text(
             text = label,
             style = WePrayTheme.typography.bodySmall,
-            color = WePrayTheme.colors.textDisabled
+            color = WePrayTheme.colors.textSecondary
         )
 
         Text(
             text = description,
             style = WePrayTheme.typography.bodySmall,
-            color = descriptionColor
+            color = descriptionColor.copy(alpha = 0.7f)
         )
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -757,7 +759,7 @@ private fun ApkDetailSection(
                         Icon(
                             imageVector = Icons.Outlined.Android,
                             contentDescription = "App Icon",
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(WePrayTheme.iconSize.default),
                             tint = WePrayTheme.colors.accentEmerald
                         )
                     }
@@ -767,14 +769,16 @@ private fun ApkDetailSection(
                         verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
                     ) {
                         // App Name & version
-                        Row(
+                        FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
                         ) {
                             Text(
                                 text = selectedApkFile.appName ?: selectedApkFile.fileName,
                                 style = WePrayTheme.typography.bodyLarge,
-                                color = WePrayTheme.colors.onSurface
+                                color = WePrayTheme.colors.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
 
                             // App Version Name(Version Code)

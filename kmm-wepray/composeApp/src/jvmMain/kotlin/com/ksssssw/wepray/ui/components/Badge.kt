@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ksssssw.wepray.ui.theme.WePrayTheme
 
@@ -45,7 +46,9 @@ fun WePrayBadge(
         Text(
             text = text,
             style = WePrayTheme.typography.code.copy(fontSize = WePrayTheme.typography.labelSmall.fontSize),
-            color = textColor
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
