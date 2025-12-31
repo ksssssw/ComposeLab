@@ -1,3 +1,4 @@
+import org.gradle.toolchains.foojay.architecturesArm64Bit
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -85,6 +86,11 @@ compose.desktop {
                 packageName = appName
                 packageVersion = appVersion
                 iconFile.set(iconsRoot.resolve("icon-mac.icns"))
+            }
+            
+            // ProGuard 비활성화 (Compose Desktop은 필요 없음)
+            buildTypes.release.proguard {
+                isEnabled.set(false)
             }
         }
     }

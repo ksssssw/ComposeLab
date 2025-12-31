@@ -15,6 +15,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,13 +46,17 @@ fun DevicesScene(
 ) {
     val deviceState by viewModel.deviceState.collectAsStateWithLifecycle()
     val screenshotState by viewModel.screenshotState.collectAsStateWithLifecycle()
+    val mirroringState by viewModel.mirroringState.collectAsStateWithLifecycle()
 
     DevicesContent(
         deviceState = deviceState,
         screenshotState = screenshotState,
+        mirroringState = mirroringState,
         onDeviceSelect = viewModel::selectDevice,
         onScreenshotClick = viewModel::takeScreenshot,
-        onResetScreenshotState = viewModel::resetScreenshotState
+        onMirroringClick = viewModel::startMirroring,
+        onResetScreenshotState = viewModel::resetScreenshotState,
+        onResetMirroringState = viewModel::resetMirroringState
     )
 }
 
@@ -59,9 +64,12 @@ fun DevicesScene(
 private fun DevicesContent(
     deviceState: DevicesUiState,
     screenshotState: ScreenshotState,
+    mirroringState: MirroringState,
     onDeviceSelect: (Device) -> Unit,
     onScreenshotClick: (Device) -> Unit,
+    onMirroringClick: (Device) -> Unit,
     onResetScreenshotState: () -> Unit,
+    onResetMirroringState: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -80,9 +88,12 @@ private fun DevicesContent(
                         devices = deviceState.devices,
                         selectedDevice = deviceState.selectedDevice,
                         screenshotState = screenshotState,
+                        mirroringState = mirroringState,
                         onDeviceSelect = onDeviceSelect,
                         onScreenshotClick = onScreenshotClick,
-                        onResetScreenshotState = onResetScreenshotState
+                        onMirroringClick = onMirroringClick,
+                        onResetScreenshotState = onResetScreenshotState,
+                        onResetMirroringState = onResetMirroringState
                     )
                 }
             }
@@ -177,30 +188,50 @@ private fun DeviceList(
     devices: List<Device>,
     selectedDevice: Device?,
     screenshotState: ScreenshotState,
+    mirroringState: MirroringState,
     onDeviceSelect: (Device) -> Unit,
     onScreenshotClick: (Device) -> Unit,
+    onMirroringClick: (Device) -> Unit,
     onResetScreenshotState: () -> Unit,
+    onResetMirroringState: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
 
-    // 스크린샷 결과 스낵바 처리
-    when (screenshotState) {
-        is ScreenshotState.Success -> {
-            // 성공 메시지 표시 (간단한 구현)
-            println("✅ 스크린샷 저장됨: ${screenshotState.filePath}")
-            onResetScreenshotState()
+    // 스크린샷 결과 처리 - LaunchedEffect로 side-effect 격리
+    LaunchedEffect(screenshotState) {
+        when (screenshotState) {
+            is ScreenshotState.Success -> {
+                println("✅ 스크린샷 저장됨: ${screenshotState.filePath}")
+                onResetScreenshotState()
+            }
+            is ScreenshotState.Cancelled -> {
+                println("ℹ️ 스크린샷 경로 선택이 취소되었습니다")
+                onResetScreenshotState()
+            }
+            is ScreenshotState.Error -> {
+                println("❌ 스크린샷 실패: ${screenshotState.message}")
+                onResetScreenshotState()
+            }
+            else -> { /* Loading or Idle */ }
         }
-        is ScreenshotState.Cancelled -> {
-            // 취소 메시지 표시
-            println("ℹ️ 스크린샷 경로 선택이 취소되었습니다")
-            onResetScreenshotState()
+    }
+
+    // 미러링 결과 처리 - LaunchedEffect로 side-effect 격리
+    LaunchedEffect(mirroringState) {
+        when (mirroringState) {
+            is MirroringState.Starting -> {
+                println("🔄 미러링 시작 중: ${mirroringState.device.modelName}")
+            }
+            is MirroringState.Active -> {
+                println("✅ 미러링 활성화됨: ${mirroringState.device.modelName}")
+                onResetMirroringState()
+            }
+            is MirroringState.Error -> {
+                println("❌ 미러링 실패: ${mirroringState.message}")
+                onResetMirroringState()
+            }
+            else -> { /* Idle */ }
         }
-        is ScreenshotState.Error -> {
-            // 에러 메시지 표시 (간단한 구현)
-            println("❌ 스크린샷 실패: ${screenshotState.message}")
-            onResetScreenshotState()
-        }
-        else -> { /* Loading or Idle */ }
     }
 
     Column(
@@ -228,7 +259,7 @@ private fun DeviceList(
                     isConnected = device.status == DeviceStatus.CONNECTED,
                     icon = Icons.Outlined.Smartphone,
                     onCardClick = { onDeviceSelect(device) },
-                    onMirroringClick = { /* TODO: 미러링 기능 구현 */ },
+                    onMirroringClick = { onMirroringClick(device) },
                     onScreenshotClick = { onScreenshotClick(device) }
                 )
             }

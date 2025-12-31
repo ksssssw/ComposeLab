@@ -9,12 +9,14 @@ import com.ksssssw.wepray.WePrayAppViewModel
 import com.ksssssw.wepray.data.aapt.AaptManager
 import com.ksssssw.wepray.data.adb.AdbManager
 import com.ksssssw.wepray.data.local.WePrayDatabase
+import com.ksssssw.wepray.data.scrcpy.ScrcpyManager
 import com.ksssssw.wepray.data.repository.DeviceRepositoryImpl
 import com.ksssssw.wepray.data.repository.SettingsRepositoryImpl
 import com.ksssssw.wepray.domain.repository.DeviceRepository
 import com.ksssssw.wepray.domain.repository.SettingsRepository
 import com.ksssssw.wepray.domain.usecase.GetDeviceStorageUseCase
 import com.ksssssw.wepray.domain.usecase.InstallApkUseCase
+import com.ksssssw.wepray.domain.usecase.MirrorDeviceUseCase
 import com.ksssssw.wepray.domain.usecase.RefreshDevicesUseCase
 import com.ksssssw.wepray.domain.usecase.SelectApkFolderUseCase
 import com.ksssssw.wepray.domain.usecase.SelectScreenshotPathUseCase
@@ -24,7 +26,7 @@ import com.ksssssw.wepray.ui.scene.installer.InstallerViewModel
 import com.ksssssw.wepray.ui.scene.settings.SettingsViewModel
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import java.io.File
@@ -75,6 +77,9 @@ val dataModule = module {
     // AaptManager - Singleton
     singleOf(::AaptManager)
     
+    // ScrcpyManager - Singleton
+    singleOf(::ScrcpyManager)
+    
     // Repositories
     single<DeviceRepository> {
         DeviceRepositoryImpl(
@@ -96,24 +101,51 @@ val domainModule = module {
     factory { SelectApkFolderUseCase() }
     factory { InstallApkUseCase(get()) }
     factory { GetDeviceStorageUseCase(get()) }
+    factory { MirrorDeviceUseCase(get()) }
 }
 
 /**
  * UI Layer 모듈
  */
 val uiModule = module {
-    // ViewModels
-    // 앱 전역 ViewModel - Repository 주입
-    viewModelOf(::WePrayAppViewModel)
+    // ViewModels - 명시적 의존성 주입 (Release 빌드 호환성)
     
-    // Devices 화면 ViewModel - Repository 주입 (ViewModel 간 의존성 없음)
-    viewModelOf(::DevicesViewModel)
+    // 앱 전역 ViewModel
+    viewModel {
+        WePrayAppViewModel(
+            deviceRepository = get(),
+            settingsRepository = get(),
+            refreshDevicesUseCase = get()
+        )
+    }
+    
+    // Devices 화면 ViewModel
+    viewModel {
+        DevicesViewModel(
+            deviceRepository = get(),
+            takeScreenshotUseCase = get(),
+            mirrorDeviceUseCase = get()
+        )
+    }
 
     // Settings 화면 ViewModel
-    viewModelOf(::SettingsViewModel)
+    viewModel {
+        SettingsViewModel(
+            settingsRepository = get(),
+            selectScreenshotPathUseCase = get()
+        )
+    }
     
-    // Installer 화면 ViewModel (3개 파라미터)
-    viewModelOf(::InstallerViewModel)
+    // Installer 화면 ViewModel
+    viewModel {
+        InstallerViewModel(
+            deviceRepository = get(),
+            settingsRepository = get(),
+            aaptManager = get(),
+            installApkUseCase = get(),
+            selectApkFolderUseCase = get()
+        )
+    }
 }
 
 /**
