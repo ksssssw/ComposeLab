@@ -115,4 +115,16 @@ sealed class AdbCommand {
         override fun toCommandString(): String =
             "-s $serialNumber pull $devicePath $localPath"
     }
+    
+    /**
+     * 설치된 앱 목록 조회
+     *
+     * @property serialNumber 디바이스 시리얼 번호
+     */
+    data class ListInstalledApps(
+        val serialNumber: String,
+    ) : AdbCommand() {
+        override fun toCommandString(): String =
+            "-s $serialNumber shell pm list packages"
+    }
 }

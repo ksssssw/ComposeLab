@@ -15,6 +15,8 @@ fun main() {
     }
 
     application {
+        System.setProperty("skiko.directx.resourceCacheLimitBytes", "134217728")
+
         Window(
             onCloseRequest = ::exitApplication,
             title = "WePray",

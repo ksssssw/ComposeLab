@@ -2,7 +2,12 @@ package com.ksssssw.wepray.ui.components
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,7 +25,9 @@ import com.ksssssw.wepray.ui.theme.WePrayTheme
 @Composable
 fun WePrayBadge(
     text: String,
-    variant: BadgeVariant = BadgeVariant.Primary,
+    variant: BadgeVariant? = null,
+    backgroundColor: Color? = WePrayTheme.colors.primaryContainer,
+    textColor: Color? = WePrayTheme.colors.primary,
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (variant) {
@@ -31,12 +38,13 @@ fun WePrayBadge(
         BadgeVariant.Error -> WePrayTheme.colors.errorContainer to WePrayTheme.colors.error
         BadgeVariant.Info -> WePrayTheme.colors.infoContainer to WePrayTheme.colors.info
         BadgeVariant.Neutral -> WePrayTheme.colors.surfaceVariant to WePrayTheme.colors.textSecondary
+        null -> backgroundColor to textColor
     }
     
     Box(
         modifier = modifier
             .clip(WePrayTheme.shapes.medium)
-            .background(backgroundColor)
+            .background(backgroundColor!!)
             .padding(
                 horizontal = WePrayTheme.spacing.md,
                 vertical = WePrayTheme.spacing.xs
@@ -46,7 +54,7 @@ fun WePrayBadge(
         Text(
             text = text,
             style = WePrayTheme.typography.code.copy(fontSize = WePrayTheme.typography.labelSmall.fontSize),
-            color = textColor,
+            color = textColor!!,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

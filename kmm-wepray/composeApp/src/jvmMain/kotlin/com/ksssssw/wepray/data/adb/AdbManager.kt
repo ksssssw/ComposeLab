@@ -237,4 +237,44 @@ class AdbManager {
         val match = regex.find(output)
         return match?.groupValues?.get(1) ?: "Unknown"
     }
+    
+    /**
+     * 설치된 앱 목록을 조회합니다.
+     * 
+     * @param serialNumber 디바이스 시리얼 번호
+     * @return 패키지명 목록
+     */
+    suspend fun getInstalledApps(serialNumber: String): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            val command = AdbCommand.ListInstalledApps(serialNumber)
+            val result = executeCommand(command)
+            
+            result.map { output ->
+                output.trim().split("\n")
+                    .mapNotNull { line ->
+                        // 출력 예시: "package:com.instagram.android"
+                        if (line.startsWith("package:")) {
+                            line.substringAfter("package:")
+                        } else {
+                            null
+                        }
+                    }
+                    .filter { it.isNotBlank() }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * 딥링크를 전송합니다.
+     * 
+     * @param serialNumber 디바이스 시리얼 번호
+     * @param deepLink 딥링크 URL
+     * @return 성공 여부
+     */
+    suspend fun sendDeepLink(serialNumber: String, deepLink: String): Result<String> {
+        val command = AdbCommand.SendDeepLink(serialNumber, deepLink)
+        return executeCommand(command)
+    }
 }

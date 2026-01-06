@@ -10,8 +10,10 @@ import com.ksssssw.wepray.data.aapt.AaptManager
 import com.ksssssw.wepray.data.adb.AdbManager
 import com.ksssssw.wepray.data.local.WePrayDatabase
 import com.ksssssw.wepray.data.scrcpy.ScrcpyManager
+import com.ksssssw.wepray.data.repository.DeepLinkerRepositoryImpl
 import com.ksssssw.wepray.data.repository.DeviceRepositoryImpl
 import com.ksssssw.wepray.data.repository.SettingsRepositoryImpl
+import com.ksssssw.wepray.domain.repository.DeepLinkerRepository
 import com.ksssssw.wepray.domain.repository.DeviceRepository
 import com.ksssssw.wepray.domain.repository.SettingsRepository
 import com.ksssssw.wepray.domain.usecase.GetDeviceStorageUseCase
@@ -21,6 +23,7 @@ import com.ksssssw.wepray.domain.usecase.RefreshDevicesUseCase
 import com.ksssssw.wepray.domain.usecase.SelectApkFolderUseCase
 import com.ksssssw.wepray.domain.usecase.SelectScreenshotPathUseCase
 import com.ksssssw.wepray.domain.usecase.TakeScreenshotUseCase
+import com.ksssssw.wepray.ui.scene.deeplinker.DeepLinkerViewModel
 import com.ksssssw.wepray.ui.scene.devices.DevicesViewModel
 import com.ksssssw.wepray.ui.scene.installer.InstallerViewModel
 import com.ksssssw.wepray.ui.scene.settings.SettingsViewModel
@@ -51,6 +54,51 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 }
 
 /**
+ * Database 마이그레이션: v2 -> v3
+ * Deep Link Tester 테이블 추가
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        // favorite_apps 테이블
+        connection.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS favorite_apps (
+                packageName TEXT PRIMARY KEY NOT NULL,
+                appName TEXT NOT NULL,
+                addedAt INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        
+        // categories 테이블
+        connection.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS categories (
+                id TEXT PRIMARY KEY NOT NULL,
+                name TEXT NOT NULL,
+                colorHex TEXT NOT NULL,
+                createdAt INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        
+        // deep_link_history 테이블
+        connection.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS deep_link_history (
+                id TEXT PRIMARY KEY NOT NULL,
+                url TEXT NOT NULL,
+                packageName TEXT NOT NULL,
+                appName TEXT NOT NULL,
+                categoryId TEXT,
+                timestamp INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+/**
  * Data Layer 모듈
  */
 val dataModule = module {
@@ -64,12 +112,15 @@ val dataModule = module {
         )
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
     }
     
     // DAOs
     single { get<WePrayDatabase>().appSettingsDao() }
+    single { get<WePrayDatabase>().favoriteAppDao() }
+    single { get<WePrayDatabase>().categoryDao() }
+    single { get<WePrayDatabase>().deepLinkHistoryDao() }
     
     // AdbManager - Singleton
     singleOf(::AdbManager)
@@ -88,6 +139,13 @@ val dataModule = module {
         )
     }
     singleOf(::SettingsRepositoryImpl) bind SettingsRepository::class
+    single<DeepLinkerRepository> {
+        DeepLinkerRepositoryImpl(
+            favoriteAppDao = get(),
+            categoryDao = get(),
+            deepLinkHistoryDao = get()
+        )
+    }
 }
 
 /**
@@ -144,6 +202,15 @@ val uiModule = module {
             aaptManager = get(),
             installApkUseCase = get(),
             selectApkFolderUseCase = get()
+        )
+    }
+    
+    // Deep Linker 화면 ViewModel
+    viewModel {
+        DeepLinkerViewModel(
+            deepLinkerRepository = get(),
+            deviceRepository = get(),
+            adbManager = get()
         )
     }
 }
