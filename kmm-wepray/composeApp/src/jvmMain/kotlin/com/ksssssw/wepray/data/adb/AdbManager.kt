@@ -81,7 +81,7 @@ class AdbManager {
             
             process = processBuilder.start()
             
-            val output = BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+            val output = BufferedReader(InputStreamReader(process.inputStream, Charsets.UTF_8)).use { reader ->
                 reader.readText()
             }
             

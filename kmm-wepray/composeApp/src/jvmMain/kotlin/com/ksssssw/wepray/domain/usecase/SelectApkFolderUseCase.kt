@@ -1,18 +1,19 @@
 package com.ksssssw.wepray.domain.usecase
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import java.awt.FileDialog
+import java.awt.Frame
 import java.io.File
-import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
 /**
  * APK 폴더를 선택하는 UseCase
  * 
- * JFileChooser를 사용하여 디렉토리를 선택합니다.
- * EDT(Event Dispatch Thread)에서 안전하게 실행됩니다.
+ * 네이티브 macOS FileDialog를 사용하여 디렉토리를 선택합니다.
+ * - JFileChooser보다 훨씬 모던한 UI
+ * - 한글 경로 처리 완벽 지원
+ * - macOS 시스템 다이얼로그 사용
  */
 class SelectApkFolderUseCase {
     
@@ -28,39 +29,47 @@ class SelectApkFolderUseCase {
             val selectedPath = suspendCancellableCoroutine { continuation ->
                 SwingUtilities.invokeLater {
                     try {
-                        val fileChooser = JFileChooser().apply {
-                            // 현재 경로가 있다면 시작 경로로 설정
-                            currentDirectory = if (currentPath != null && File(currentPath).exists()) {
-                                File(currentPath)
+                        // macOS 네이티브 폴더 선택 다이얼로그 설정
+                        System.setProperty("apple.awt.fileDialogForDirectories", "true")
+                        
+                        val fileDialog = FileDialog(null as Frame?, "APK 폴더 선택", FileDialog.LOAD).apply {
+                            // 시작 경로 설정
+                            if (currentPath != null && File(currentPath).exists()) {
+                                directory = currentPath
                             } else {
-                                // 기본 경로로 시작
-                                File(System.getProperty("user.home"))
+                                directory = System.getProperty("user.home")
                             }
-                            
-                            dialogTitle = "APK 폴더 선택"
-                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-                            isAcceptAllFileFilterUsed = false
                         }
                         
-                        val result = fileChooser.showDialog(null, "선택")
+                        fileDialog.isVisible = true
                         
-                        if (result == JFileChooser.APPROVE_OPTION) {
-                            val path = fileChooser.selectedFile.absolutePath
+                        // 다이얼로그가 닫힌 후
+                        System.setProperty("apple.awt.fileDialogForDirectories", "false")
+                        
+                        val selectedDir = fileDialog.directory
+                        val selectedFile = fileDialog.file
+                        
+                        if (selectedDir != null && selectedFile != null) {
+                            // FileDialog는 directory와 file을 따로 반환
+                            val path = File(selectedDir, selectedFile).absolutePath
                             continuation.resume(path)
                         } else {
                             // 사용자가 취소함
                             continuation.resume(null)
                         }
                     } catch (e: Exception) {
-                        println("❌ Error showing file chooser: ${e.message}")
+                        println("❌ Error showing file dialog: ${e.message}")
+                        System.setProperty("apple.awt.fileDialogForDirectories", "false")
                         continuation.resume(null)
                     }
                 }
             }
             
             if (selectedPath != null) {
-                println("✅ APK folder selected: $selectedPath")
-                Result.success(selectedPath)
+                // 경로 정규화 및 실제 파일 시스템 경로로 변환
+                val normalizedPath = File(selectedPath).canonicalPath
+                println("✅ APK folder selected: $normalizedPath")
+                Result.success(normalizedPath)
             } else {
                 println("ℹ️ APK folder selection cancelled")
                 Result.success(null)

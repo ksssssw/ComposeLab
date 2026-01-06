@@ -1,4 +1,3 @@
-import org.gradle.toolchains.foojay.architecturesArm64Bit
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -68,7 +67,8 @@ compose.desktop {
             "-XX:+UseG1GC",                  // G1 가비지 컬렉터 사용
             "-XX:MaxGCPauseMillis=200",      // GC 일시정지 최대 200ms
             "-XX:+UseStringDeduplication",   // 문자열 중복 제거
-            "-Dsun.java2d.opengl=true"       // OpenGL 하드웨어 가속 활성화
+            "-Dsun.java2d.opengl=true",      // OpenGL 하드웨어 가속 활성화
+            "-Dfile.encoding=UTF-8"          // 파일 인코딩 UTF-8 설정 (한글 경로 지원)
         )
 
         nativeDistributions {
