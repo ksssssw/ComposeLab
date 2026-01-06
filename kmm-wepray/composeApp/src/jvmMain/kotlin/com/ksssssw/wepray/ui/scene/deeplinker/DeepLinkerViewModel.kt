@@ -10,6 +10,7 @@ import com.ksssssw.wepray.domain.repository.DeepLinkerRepository
 import com.ksssssw.wepray.domain.repository.DeviceRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import java.util.UUID
 
 /**
@@ -86,6 +87,10 @@ class DeepLinkerViewModel(
     /** 작업 상태 그룹 */
     private val _operationState = MutableStateFlow(OperationState())
     
+    // Performance optimization: Cache loaded apps by device serial number
+    private val appsCache = mutableMapOf<String, List<InstalledApp>>()
+    private var lastLoadJob: Job? = null
+    
     /**
      * DeepLinkerUiState: 모든 관련 상태를 하나로 묶음
      * Repository의 Flow와 로컬 상태를 combine하여 통합 UI 상태 생성
@@ -140,11 +145,11 @@ class DeepLinkerViewModel(
      */
     private fun initializeDefaultCategories() {
         viewModelScope.launch {
-            categories.collect { categoriesList ->
-                if (categoriesList.isEmpty()) {
-                    getDefaultCategories().forEach { category ->
-                        deepLinkerRepository.addCategory(category)
-                    }
+            // Repository를 직접 사용하여 초기화 시점 문제 해결
+            val categoriesList = deepLinkerRepository.getAllCategories().first()
+            if (categoriesList.isEmpty()) {
+                getDefaultCategories().forEach { category ->
+                    deepLinkerRepository.addCategory(category)
                 }
             }
         }
@@ -157,14 +162,37 @@ class DeepLinkerViewModel(
     /**
      * 설치된 앱 목록을 로드합니다.
      */
+    /**
+     * 캐시를 무시하고 앱 목록을 강제로 새로고침합니다.
+     */
+    fun refreshInstalledApps() {
+        val device = selectedDevice.value ?: return
+        appsCache.remove(device.serialNumber)
+        loadInstalledApps()
+    }
+    
+    /**
+     * 설치된 앱 목록을 로드합니다.
+     * Performance optimization: 캐싱과 중복 요청 방지 적용
+     */
     fun loadInstalledApps() {
-        viewModelScope.launch {
+        // Cancel previous loading job if still running
+        lastLoadJob?.cancel()
+        
+        lastLoadJob = viewModelScope.launch {
             val device = selectedDevice.value
             if (device == null) {
                 _operationState.value = _operationState.value.copy(
                     errorMessage = "No device selected"
                 )
                 return@launch
+            }
+            
+            // Check cache first (performance optimization)
+            val cachedApps = appsCache[device.serialNumber]
+            if (cachedApps != null && cachedApps.isNotEmpty()) {
+                _appState.value = _appState.value.copy(installedApps = cachedApps)
+                return@launch // Use cached data
             }
             
             _operationState.value = _operationState.value.copy(
@@ -182,6 +210,9 @@ class DeepLinkerViewModel(
                             ?: packageName
                         InstalledApp(packageName, appName)
                     }.sortedBy { it.appName }
+                    
+                    // Update cache
+                    appsCache[device.serialNumber] = apps
                     
                     _appState.value = _appState.value.copy(installedApps = apps)
                 }.onFailure { e ->

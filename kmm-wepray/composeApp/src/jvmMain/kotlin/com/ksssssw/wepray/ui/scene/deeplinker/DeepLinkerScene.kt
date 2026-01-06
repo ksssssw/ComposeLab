@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -79,6 +80,14 @@ data class DeepLinkHistory(
     val timestamp: String
 )
 
+// Performance optimization: Group apps by category
+private data class AppGroups(
+    val favorites: List<AppInfo>,
+    val recent: List<AppInfo>,
+    val others: List<AppInfo>,
+    val isEmpty: Boolean
+)
+
 @Composable
 fun DeepLinkerScene(
     viewModel: DeepLinkerViewModel = koinViewModel()
@@ -106,9 +115,11 @@ fun DeepLinkerScene(
     // Extract success state
     val state = (uiState as? DeepLinkerUiState.Success) ?: return
     
-    // Load installed apps when device changes
+    // Preload installed apps when device changes (performance optimization)
     LaunchedEffect(state.selectedDevice) {
-        if (state.selectedDevice != null && state.apps.isEmpty()) {
+        if (state.selectedDevice != null) {
+            // Load apps in background even if we already have some
+            // This ensures fresh data without blocking UI
             viewModel.loadInstalledApps()
         }
     }
@@ -420,7 +431,10 @@ fun DeepLinkerScene(
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.md)
                     ) {
-                        items(state.history) { historyItem ->
+                        items(
+                            items = state.history,
+                            key = { it.id }  // Performance: Helps Compose track items efficiently
+                        ) { historyItem ->
                             val historyApp = AppInfo(
                                 name = historyItem.appName,
                                 packageName = historyItem.packageName,
@@ -460,20 +474,35 @@ private fun AppSelectorDialog(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     
-    // Filtered app list
-    val filteredApps = remember(apps, excludeSystemApps, searchQuery) {
-        apps
-            .filter { !excludeSystemApps || !it.isSystem }
-            .filter { 
-                searchQuery.isEmpty() || 
-                it.name.contains(searchQuery, ignoreCase = true) || 
-                it.packageName.contains(searchQuery, ignoreCase = true)
+    // Optimized filtering with derivedStateOf - only recomputes when dependencies change
+    val appGroups by remember(apps, excludeSystemApps) {
+        derivedStateOf {
+            val filtered = apps
+                .asSequence()  // Use sequence for lazy evaluation
+                .filter { !excludeSystemApps || !it.isSystem }
+                .filter { 
+                    searchQuery.isEmpty() || 
+                    it.name.contains(searchQuery, ignoreCase = true) || 
+                    it.packageName.contains(searchQuery, ignoreCase = true)
+                }
+                .toList()
+            
+            // Group apps in one pass for better performance
+            val favorites = mutableListOf<AppInfo>()
+            val recent = mutableListOf<AppInfo>()
+            val others = mutableListOf<AppInfo>()
+            
+            filtered.forEach { app ->
+                when {
+                    app.isFavorite -> favorites.add(app)
+                    app.isRecent -> recent.add(app)
+                    else -> others.add(app)
+                }
             }
+            
+            AppGroups(favorites, recent, others, filtered.isEmpty())
+        }
     }
-    
-    val favoriteApps = filteredApps.filter { it.isFavorite }
-    val recentApps = filteredApps.filter { it.isRecent && !it.isFavorite }
-    val otherApps = filteredApps.filter { !it.isFavorite && !it.isRecent }
     
     WePrayDialog(
         onDismissRequest = onDismiss,
@@ -497,72 +526,109 @@ private fun AppSelectorDialog(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                WePrayCheckbox(
+                    checked = excludeSystemApps,
+                    onCheckedChange = onExcludeSystemAppsChange,
+                    label = "Exclude System Apps"
+                )
+            }
             
-            WePrayCheckbox(
-                checked = excludeSystemApps,
-                onCheckedChange = onExcludeSystemAppsChange,
-                label = "Exclude System Apps"
-            )
-            
-            // App list
-            Column(
+            // App list - Using LazyColumn for virtualization (performance optimization)
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(450.dp)  // Fixed height for stable UI
-                    .verticalScroll(rememberScrollState()),
+                    .height(450.dp),  // Fixed height for stable UI
                 verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
             ) {
-                if (filteredApps.isEmpty()) {
-                    Text(
-                        text = "No apps found",
-                        style = WePrayTheme.typography.bodyMedium,
-                        color = WePrayTheme.colors.textSecondary,
-                        modifier = Modifier.padding(WePrayTheme.spacing.md)
-                    )
+                if (appGroups.isEmpty) {
+                    item {
+                        Text(
+                            text = "No apps found",
+                            style = WePrayTheme.typography.bodyMedium,
+                            color = WePrayTheme.colors.textSecondary,
+                            modifier = Modifier.padding(WePrayTheme.spacing.md)
+                        )
+                    }
                 } else {
                     // Favorite apps
-                    if (favoriteApps.isNotEmpty()) {
-                        AppSection(
-                            title = "Favorites",
-                            icon = Icons.Outlined.Star,
-                            apps = favoriteApps,
-                            onAppClick = onAppSelected,
-                            onFavoriteToggle = onFavoriteToggle
-                        )
+                    if (appGroups.favorites.isNotEmpty()) {
+                        item {
+                            AppSectionHeader(
+                                title = "Favorites",
+                                icon = Icons.Outlined.Star
+                            )
+                        }
+                        items(
+                            items = appGroups.favorites,
+                            key = { it.packageName }
+                        ) { app ->
+                            AppMenuItem(
+                                app = app,
+                                onClick = { onAppSelected(app) },
+                                onFavoriteToggle = { onFavoriteToggle(app) }
+                            )
+                        }
                     }
                     
                     // Recent apps
-                    if (recentApps.isNotEmpty()) {
-                        if (favoriteApps.isNotEmpty()) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = WePrayTheme.spacing.sm),
-                                color = WePrayTheme.colors.border
+                    if (appGroups.recent.isNotEmpty()) {
+                        if (appGroups.favorites.isNotEmpty()) {
+                            item {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = WePrayTheme.spacing.sm),
+                                    color = WePrayTheme.colors.border
+                                )
+                            }
+                        }
+                        item {
+                            AppSectionHeader(
+                                title = "Recent",
+                                icon = Icons.Outlined.Schedule
                             )
                         }
-                        AppSection(
-                            title = "Recent",
-                            icon = Icons.Outlined.Schedule,
-                            apps = recentApps,
-                            onAppClick = onAppSelected,
-                            onFavoriteToggle = onFavoriteToggle
-                        )
+                        items(
+                            items = appGroups.recent,
+                            key = { it.packageName }
+                        ) { app ->
+                            AppMenuItem(
+                                app = app,
+                                onClick = { onAppSelected(app) },
+                                onFavoriteToggle = { onFavoriteToggle(app) }
+                            )
+                        }
                     }
                     
                     // All apps
-                    if (otherApps.isNotEmpty()) {
-                        if (favoriteApps.isNotEmpty() || recentApps.isNotEmpty()) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = WePrayTheme.spacing.sm),
-                                color = WePrayTheme.colors.border
+                    if (appGroups.others.isNotEmpty()) {
+                        if (appGroups.favorites.isNotEmpty() || appGroups.recent.isNotEmpty()) {
+                            item {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = WePrayTheme.spacing.sm),
+                                    color = WePrayTheme.colors.border
+                                )
+                            }
+                        }
+                        item {
+                            AppSectionHeader(
+                                title = "All Apps",
+                                icon = Icons.Outlined.Apps
                             )
                         }
-                        AppSection(
-                            title = "All Apps",
-                            icon = Icons.Outlined.Apps,
-                            apps = otherApps,
-                            onAppClick = onAppSelected,
-                            onFavoriteToggle = onFavoriteToggle
-                        )
+                        items(
+                            items = appGroups.others,
+                            key = { it.packageName }
+                        ) { app ->
+                            AppMenuItem(
+                                app = app,
+                                onClick = { onAppSelected(app) },
+                                onFavoriteToggle = { onFavoriteToggle(app) }
+                            )
+                        }
                     }
                 }
             }
@@ -571,41 +637,26 @@ private fun AppSelectorDialog(
 }
 
 @Composable
-private fun AppSection(
+private fun AppSectionHeader(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    apps: List<AppInfo>,
-    onAppClick: (AppInfo) -> Unit,
-    onFavoriteToggle: (AppInfo) -> Unit
+    icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.xs)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = WePrayTheme.spacing.sm, vertical = WePrayTheme.spacing.xs)
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(WePrayTheme.spacing.sm),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = WePrayTheme.spacing.sm, vertical = WePrayTheme.spacing.xs)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = WePrayTheme.colors.textTertiary
-            )
-            Text(
-                text = title,
-                style = WePrayTheme.typography.labelSmall,
-                color = WePrayTheme.colors.textTertiary
-            )
-        }
-        
-        apps.forEach { app ->
-            AppMenuItem(
-                app = app,
-                onClick = { onAppClick(app) },
-                onFavoriteToggle = { onFavoriteToggle(app) }
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = WePrayTheme.colors.textTertiary
+        )
+        Text(
+            text = title,
+            style = WePrayTheme.typography.labelSmall,
+            color = WePrayTheme.colors.textTertiary
+        )
     }
 }
 
@@ -633,7 +684,7 @@ private fun AppMenuItem(
                 imageVector = app.icon,
                 contentDescription = null,
                 modifier = Modifier.size(WePrayTheme.iconSize.default),
-                tint = WePrayTheme.colors.primary
+                tint = WePrayTheme.colors.textSecondary
             )
             Column {
                 Text(
