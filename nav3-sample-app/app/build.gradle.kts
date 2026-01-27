@@ -55,6 +55,9 @@ dependencies {
     // Core Navigation 3 libraries
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
+    // Optional add-on libraries
+    implementation(libs.androidx.material3.adaptive.navigation3)
+
 
     testImplementation(libs.junit)
 

@@ -9,16 +9,15 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
-interface TopLevelNavKey : NavKey
+interface DetailNavKey : NavKey
 
-@Serializable data object TopContentA : TopLevelNavKey
-@Serializable data object TopContentB : TopLevelNavKey
-@Serializable data object TopContentC : TopLevelNavKey
+@Serializable data object DetailContentA : DetailNavKey
+@Serializable data object DetailContentB : DetailNavKey
 
 @Composable
-fun TopContent(
+fun DetailContent(
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Column(
         modifier = modifier
