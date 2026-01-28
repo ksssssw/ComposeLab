@@ -1,4 +1,4 @@
-package com.onestorecorp.android.nav3_sample_app.scene
+package com.onestorecorp.android.nav3_sample_app.navigation.strategy
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +10,6 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.scene.SceneStrategy
 import androidx.navigation3.scene.SceneStrategyScope
-import com.onestorecorp.android.nav3_sample_app.scene.BottomNavScene.Companion.NAV_BAR
 
 class BottomNavScene<T : Any>(
     private val originalScene: Scene<T>,
@@ -21,9 +20,9 @@ class BottomNavScene<T : Any>(
     override val previousEntries: List<NavEntry<T>> = originalScene.previousEntries
 
     override val content: @Composable (() -> Unit) = {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.Companion.fillMaxSize()) {
             // 원래 Scene 내용
-            Box(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.Companion.weight(1f)) {
                 originalScene.content()
             }
             // Bottom Navigation
@@ -52,7 +51,7 @@ class BottomNavSceneStrategy<T : Any>(
 
     override fun SceneStrategyScope<T>.calculateScene(scene: Scene<T>): Scene<T> {
         // Scene의 metadata를 확인해서 BottomNav를 추가할지 결정
-        val showBottomNav = scene.metadata.containsKey(NAV_BAR)
+        val showBottomNav = scene.metadata.containsKey(BottomNavScene.Companion.NAV_BAR)
 
         return if (showBottomNav) {
             BottomNavScene(scene, bottomBarContent)

@@ -8,35 +8,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Face
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.Companion.listPane
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
-import com.onestorecorp.android.nav3_sample_app.scene.BottomNavScene.Companion.showNavBar
-import com.onestorecorp.android.nav3_sample_app.scene.rememberBottomNavSceneStrategy
-import com.onestorecorp.android.nav3_sample_app.ui.contents.DetailContent
-import com.onestorecorp.android.nav3_sample_app.ui.contents.DetailContentA
-import com.onestorecorp.android.nav3_sample_app.ui.contents.DetailContentB
-import com.onestorecorp.android.nav3_sample_app.ui.contents.TopContent
-import com.onestorecorp.android.nav3_sample_app.ui.contents.TopContentA
-import com.onestorecorp.android.nav3_sample_app.ui.contents.TopContentB
-import com.onestorecorp.android.nav3_sample_app.ui.contents.TopContentC
-import com.onestorecorp.android.nav3_sample_app.ui.contents.TopLevelNavKey
-import com.onestorecorp.android.nav3_sample_app.ui.theme.Nav3sampleappTheme
+import com.onestorecorp.android.nav3_sample_app.navigation.animations.fadeAnimatedTransform
+import com.onestorecorp.android.nav3_sample_app.navigation.animations.predictFadeAnimatedTransform
+import com.onestorecorp.android.nav3_sample_app.navigation.entries.TopLevelDestination
+import com.onestorecorp.android.nav3_sample_app.navigation.entries.bottomSheetEntryBuilder
+import com.onestorecorp.android.nav3_sample_app.navigation.entries.detailEntryBuilder
+import com.onestorecorp.android.nav3_sample_app.navigation.entries.dialogEntryBuilder
+import com.onestorecorp.android.nav3_sample_app.navigation.entries.topLevelEntryBuilder
+import com.onestorecorp.android.nav3_sample_app.navigation.strategy.rememberBottomNavSceneStrategy
+import com.onestorecorp.android.nav3_sample_app.navigation.strategy.rememberBottomSheetSceneStrategy
+import com.onestorecorp.android.nav3_sample_app.ui.theme.Nav3SampleAppTheme
+import com.onestorecorp.android.nav3_sample_app.ui.theme.PastelYellow
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -44,108 +39,63 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val backStack = rememberNavBackStack(TopContentA)
+            val backStack = rememberNavBackStack(TopLevelDestination.ROOT_VIEW)
             val currentTopLevel = backStack.lastOrNull()
 
-            Nav3sampleappTheme {
+            val bottomNavSceneStrategy = rememberBottomNavSceneStrategy<NavKey>(
+                bottomBarContent = {
+                    NavigationBar {
+                        TopLevelDestination.entries.forEach { destination ->
+                            NavigationBarItem(
+                                selected = currentTopLevel == destination.route,
+                                onClick = { backStack.add(destination.route) },
+                                icon = {
+                                    Icon(
+                                        imageVector = destination.icon,
+                                        contentDescription = destination.label
+                                    )
+                                },
+                                label = {
+                                    Text(destination.label)
+                                }
+                            )
+                        }
+                    }
+                })
+            val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
+            val bottomSheetStrategy = rememberBottomSheetSceneStrategy<NavKey>()
+
+            Nav3SampleAppTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                 ) { innerPadding ->
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Yellow)
+                            .background(PastelYellow)
                             .padding(innerPadding)
                     ) {
                         NavDisplay(
                             backStack = backStack,
                             onBack = { backStack.removeLastOrNull() },
-                            sceneStrategy = rememberBottomNavSceneStrategy(
-                                bottomBarContent = {
-                                    NavigationBar {
-                                        TopLevelDestination.entries.forEach { destination ->
-                                            NavigationBarItem(
-                                                selected = currentTopLevel == destination.route,
-                                                onClick = { backStack.add(destination.route) },
-                                                icon = {
-                                                    Icon(
-                                                        imageVector = destination.icon,
-                                                        contentDescription = destination.label
-                                                    )
-                                                },
-                                                label = {
-                                                    Text(destination.label)
-                                                }
-                                            )
-                                        }
-                                    }
-                                }),
+                            transitionSpec = fadeAnimatedTransform(),
+                            popTransitionSpec = fadeAnimatedTransform(),
+                            predictivePopTransitionSpec = predictFadeAnimatedTransform(),
+                            sceneStrategy = bottomNavSceneStrategy
+                                .then(bottomSheetStrategy)
+                                .then(dialogStrategy),
                             entryProvider = entryProvider {
-                                // Top Level 화면들 - BottomNav 표시
-                                entry(
-                                    TopContentA,
-                                    metadata = listPane() + showNavBar()
-                                ) {
-                                    TopContent(
-                                        modifier = Modifier.background(Color.Red),
-                                        content = {
-                                            Text("Top Content A")
-
-                                            Button(onClick = { backStack.add(DetailContentA) }) {
-                                                Text("Go to Detail A")
-                                            }
-                                        }
-                                    )
-                                }
-
-                                entry(
-                                    TopContentB,
-                                    metadata = showNavBar()
-                                ) {
-                                    TopContent(
-                                        modifier = Modifier.background(Color.Green),
-                                        content = {
-                                            Text("Top Content B")
-                                        }
-                                    )
-                                }
-
-                                entry(
-                                    TopContentC,
-                                    metadata = showNavBar()
-                                ) {
-                                    TopContent(
-                                        modifier = Modifier.background(Color.Blue),
-                                        content = {
-                                            Text("Top Content C")
-                                        }
-                                    )
-                                }
+                                // Top Level 화면 - BottomNav 표시
+                                topLevelEntryBuilder(backStack = backStack)
 
                                 // Detail 화면 - BottomNav 숨김 (metadata 없음)
-                                entry(
-                                    DetailContentA
-                                ) {
-                                    DetailContent(
-                                        modifier = Modifier.background(Color.White),
-                                        content = {
-                                            Text("Detail Content A")
+                                detailEntryBuilder(backStack = backStack)
 
-                                            Button(onClick = { backStack.add(DetailContentB) }) {
-                                                Text("Go to Detail B")
-                                            }
-                                        }
-                                    )
-                                }
+                                // Dialog 장면
+                                dialogEntryBuilder()
 
-                                entry(DetailContentB) {
-                                    DetailContent(
-                                        modifier = Modifier.background(Color.Magenta),
-                                        content = {
-                                            Text("Detail Content B")
-                                        }
-                                    )
-                                }
+                                // BottomSheet 장면
+                                bottomSheetEntryBuilder()
                             }
                         )
                     }
@@ -153,26 +103,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-enum class TopLevelDestination(
-    val label: String,
-    val icon: ImageVector,
-    val route: TopLevelNavKey,
-) {
-    Atab(
-        label = "Tab A",
-        icon = Icons.Outlined.Home,
-        route = TopContentA
-    ),
-    Btab(
-        label = "Tab B",
-        icon = Icons.Outlined.Face,
-        route = TopContentB
-    ),
-    Ctab(
-        label = "Tab C",
-        icon = Icons.Outlined.Favorite,
-        route = TopContentC
-    )
 }

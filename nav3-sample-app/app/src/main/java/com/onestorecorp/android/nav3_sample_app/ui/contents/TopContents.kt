@@ -6,14 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation3.runtime.NavKey
-import kotlinx.serialization.Serializable
-
-interface TopLevelNavKey : NavKey
-
-@Serializable data object TopContentA : TopLevelNavKey
-@Serializable data object TopContentB : TopLevelNavKey
-@Serializable data object TopContentC : TopLevelNavKey
 
 @Composable
 fun TopContent(
